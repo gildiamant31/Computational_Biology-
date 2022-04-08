@@ -43,6 +43,19 @@ def passThreshold(sickPercentage):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    # create matrix of cells:
+    import pygame
+
+    pygame.init()
+    screen = pygame.display.set_mode((400, 300))
+    done = False
+
+    while not done:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                done = True
+        pygame.draw.rect(screen, (0, 125, 255), pygame.Rect(150, 150, 60, 60))
+
+        pygame.display.flip()
+        # create matrix of cells:
     matrix = np.full(matrix_size, Cell())
-    print(matrix)
+    print(matrix.shape)
