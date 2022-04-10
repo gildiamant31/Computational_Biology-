@@ -17,23 +17,82 @@ directions = ['up', 'down', 'right', 'left', 'bootomright', 'bootomleft', 'uprig
 
 
 class Yetzur:
-    def __init__(self, cellMatrix, location, isInfected=False):
-        self.location = location  # has to be two dimensions
-        self.isInfected = isInfected  # true or false
-        self.isFast = False  # true or false , tell us if this object can move 10 cells in one direction
-        # per generation.
-        cellMatrix[self.location[0]][self.location[1]].newYetzur = self
+    def __init__(self, location, stats="H", isFast=False):
+        assert stats in ["H", "S", "R"], str(
+            stats) + "Yetzur can be is stats of H/S/R only"  # H/S/R for healthy/Sick/Recoverd
+        self.isHealthy = self.isSick = self.isRecovered = False
+        if stats == "H":
+            self.isHealthy = True
+        if stats == "S":
+            self.isSick = True
+        if stats == "R":
+            self.isRecovered = True
+        self.isFast = isFast  # true or false , tell us if this object can move 10 cells in one direction
+        self.location = location
 
-    def move(self):
-        if self.isFast:
-            print('0')
+    def get_sick(self):
+        self.isHealthy = self.isRecovered = False
+        self.isSick = True
+
+    def get_recovered(self):
+        self.isHealthy = self.isSick = False
+        self.isRecovered = True
+
+    def next_location(self):
+        if not self.isFast:
+            return  random.choice(self.get_neghibors_and_self_indexes())
+        else:
+            vert_change = random.choice(range(-10, 11))
+            new_vert = (self.location[0] + vert_change) % matrix_size[0]
+            horiz_change = random.choice(range(-10, 11))
+            new_horiz = (self.location[1] + horiz_change) % matrix_size[1]
+            return tuple([new_vert, new_horiz])
+
+    def get_neghibors_and_self_indexes(self):
+        return [tuple([(i + self.location[0]) % matrix_size[0], (j + self.location[1]) % matrix_size[1]]) for i in
+                range(-1, 2) for j in range(-1, 2)]
 
 
 class Cell:
-    def __init__(self, newYetzur=None, isFull=False):
+    def __init__(self, isFull=False, content=None):
         self.isFull = isFull
-        if self.isFull:
-            self.newYetzur = newYetzur
+        self.content = content
+
+    def add_content(self, new_yetzur):
+        assert not self.isFull, "tried to fill filled cell"
+        self.content = new_yetzur
+        self.isFull = True
+
+    def remove_content(self):
+        assert self.isFull, "cant clear empty cell"
+        self.isFull = False
+        old_cont = self.content
+        self.content = None
+        return old_cont
+
+
+class Board:
+    def __init__(self, size=matrix_size):
+        self.matrix = np.full(matrix_size, Cell())
+
+    # TODO update residence location
+    def add_residence_to(self,residence, new_location):
+        if self.matrix[new_location[0],new_location[1]].isFull:
+            return False
+        else:
+            self.matrix[new_location[0],new_location[1]].add_content(residence)
+            return True
+
+    def remove_residence_from(self,location):
+        return self.matrix[location[0],location[1]].remove_content()
+
+    def add_residence_randomly(self):
+        while(not self.add_residence_to(((random.choice(range(0,matrix_size[0])),random.choice(range(0,matrix_size[1])))))):
+            pass
+
+    def add_N_of_residence_randomly(self, N):
+        for i in range(N):
+            self.add_residence_randomly()
 
 
 # check if we pass the threshold and return the adjusted P
@@ -133,7 +192,7 @@ def show_Simulation():
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    matrix = np.full(matrix_size, Cell())
+
     # get random initial indexes for start of simulation
     # np.random.seed(0)  # to get difference random index - mabey we can remove it
     i = np.random.choice(199, int(N))
