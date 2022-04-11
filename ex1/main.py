@@ -58,9 +58,10 @@ class Cell:
         self.isFull = isFull
         self.content = content
 
-    def add_content(self, new_yetzur):
+    def add_content(self, new_yetzur , new_location):
         assert not self.isFull, "tried to fill filled cell"
         self.content = new_yetzur
+        self.content.location =[new_location[0],new_location[1]]
         self.isFull = True
 
     def remove_content(self):
@@ -77,22 +78,36 @@ class Board:
 
     # TODO update residence location
     def add_residence_to(self,residence, new_location):
-        if self.matrix[new_location[0],new_location[1]].isFull:
+        if self.matrix[new_location[0]][new_location[1]].isFull:
             return False
         else:
-            self.matrix[new_location[0],new_location[1]].add_content(residence)
+            self.matrix[new_location[0]][new_location[1]].add_content(residence,(new_location[0],new_location[1]))
             return True
 
     def remove_residence_from(self,location):
         return self.matrix[location[0],location[1]].remove_content()
 
-    def add_residence_randomly(self):
-        while(not self.add_residence_to(((random.choice(range(0,matrix_size[0])),random.choice(range(0,matrix_size[1])))))):
+    def add_residence_randomly(self ,residence):
+        while(not self.add_residence_to(residence,(random.choice(range(0,matrix_size[0])),random.choice(range(0,matrix_size[1]))))):
+            return False
             pass
 
     def add_N_of_residence_randomly(self, N):
-        for i in range(N):
-            self.add_residence_randomly()
+        counter_R = int(R*N)  # for faster people
+        counter_D = int(D * N)  # for sick
+        simple_counter =0
+        for i in range(int(N)):
+            residence = Yetzur([0, 0])
+            if counter_D > 0:
+                residence.isSick = True
+                residence .isHealthy =False
+                counter_D -=1
+            if counter_R > 0:
+                residence.isFast = True
+                counter_R -=1
+            if not self.add_residence_randomly(residence):
+                simple_counter+=1
+                print(simple_counter)
 
 
 # check if we pass the threshold and return the adjusted P
@@ -192,28 +207,21 @@ def show_Simulation():
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-
-    # get random initial indexes for start of simulation
-    # np.random.seed(0)  # to get difference random index - mabey we can remove it
-    i = np.random.choice(199, int(N))
-    j = np.random.choice(199 - 1, int(N))
-    j[j >= i] += 1
-    print(np.any(i == j))
-    # False
-    ij = np.stack([i, j], axis=1)
-    counter_fast_Y = 0
-    counter_sick_Y = 0
-    people_list = []
-    for i in range(int(N)):
-        newY = Yetzur(matrix, ij[i])
-        # make some of them fast
-        if counter_fast_Y < (R * N):
-            newY.isFast = True
-            counter_fast_Y += 1
-        # make some of them infected in covid-19
-        if counter_sick_Y < (D * N):
-            newY.isInfected = True
-            counter_sick_Y += 1
-        people_list.append(newY)
-    print(matrix[newY.location[0]][newY.location[1]])
+    newBoard =Board()
+    ### בדיקה  לראות כמה תאים ריקים יש לפני האתחול של היצורים במיקומים רנדומליים
+    leng = []
+    for i in range(200):
+        for j in range(200):
+            if not newBoard.matrix[i][j].isFull:
+                leng.append(j)
+    print(len(leng))
+    ## האתחול - מדפיס כמה תאים התמלאו (הוספתי ספירה בכל פעם שתא מתמלא)
+    newBoard.add_N_of_residence_randomly(N)
+    ### בדיקה  לראות כמה תאים ריקים יש אחרי האתחול של היצורים במיקומים רנדומליים
+    leng = []
+    for i in range(200):
+        for j in range(200):
+            if not newBoard.matrix[i][j].isFull:
+                leng.append(j)
+    print(len(leng))
     # show_Simulation()
