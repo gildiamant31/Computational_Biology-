@@ -20,23 +20,33 @@ class Yetzur:
     def __init__(self, location=((0,0)), stats="H", isFast=False):
         assert stats in ["H", "S", "R"], str(
             stats) + "Yetzur can be is stats of H/S/R only"  # H/S/R for healthy/Sick/Recoverd
-        self.isHealthy = self.isSick = self.isRecovered = False
-        if stats == "H":
-            self.isHealthy = True
+        self.isSick = self.isRecovered = False
+        self.stats=stats
+        self.isHealthy = True
         if stats == "S":
-            self.isSick = True
+            self.get_sick()
         if stats == "R":
-            self.isRecovered = True
+            self.get_recovered()
         self.isFast = isFast  # true or false , tell us if this object can move 10 cells in one direction
         self.location = location
+        self.sickTime=0
 
     def get_sick(self):
         self.isHealthy = self.isRecovered = False
         self.isSick = True
+        self.stats="S"
+        self.sickTime=1
+
+    def get_older(self):
+        self.sickTime+=1
+        if self.sickTime > X:
+            self.sickTime=0
+            self.get_recovered()
 
     def get_recovered(self):
         self.isHealthy = self.isSick = False
         self.isRecovered = True
+        self.stats = "R"
 
     def next_location(self):
         if not self.isFast:
@@ -72,28 +82,36 @@ class Cell:
         return old_cont
 
     def __str__(self):
-        if self.isFull:
-            return "Y"
-        else:
+        if not self.isFull:
             return "E"
+        else:
+            return self.content.stats
 
 
 class Board:
     def __init__(self):
-        vSite = np.vectorize(Cell)
-        init_arry = np.arange(matrix_size[0]*matrix_size[1]).reshape(matrix_size)
-        self.matrix = np.empty(matrix_size, dtype=object)
-        self.matrix[:, :] = vSite(init_arry)
+        self.matrix=np.array([Cell() for i in range(matrix_size[0]*matrix_size[1])],dtype=object)
+        self.matrix=self.matrix.reshape(matrix_size)
+        # vSite = np.vectorize(Cell)
+        # init_arry = np.arange(matrix_size[0]*matrix_size[1]).reshape(matrix_size)
+        # self.matrix = np.empty(matrix_size, dtype=object)
+        # self.matrix[:, :] = vSite(init_arry)
         # self.matrix = np.full(matrix_size, #())
         self.num_residences = 0
+        self.num_sick=0
+        # TODO next generation() in simulation before adding to new board
 
     def add_residence_to(self, residence, new_location):
+        assert self.matrix.size > self.num_residences,"tried to add residence to full matrix"
         if self.matrix[new_location[0]][new_location[1]].isFull:
             return False
         else:
             self.matrix[new_location[0]][new_location[1]].add_content(residence, (new_location[0], new_location[1]))
             self.num_residences += 1
             residence.location = new_location
+            if residence.isSick:
+                self.num_sick += 1
+
             return True
 
     def remove_residence_from(self, location):
@@ -111,35 +129,52 @@ class Board:
     def add_N_of_residences_randomly(self, N):
         counter_R = int(R * N)  # for faster people
         counter_D = int(D * N)  # for sick
+        counter_DR = int(R * D)
+        counter_D = counter_D - counter_DR
+        counter_R= counter_R - counter_DR
+        N = N - counter_R - counter_D - counter_DR
         simple_counter = 0
-        for i in range(int(N)):
-            residence = Yetzur([0, 0])
-            if counter_D > 0:
-                residence.isSick = True
-                residence.isHealthy = False
-                counter_D -= 1
-            if counter_R > 0:
-                residence.isFast = True
-                counter_R -= 1
-            if not self.add_residence_randomly(residence):
-                simple_counter += 1
-                print(simple_counter)
+        [self.add_residence_randomly(Yetzur(isFast=True, stats="S")) for i in range(counter_DR)]
+        [self.add_residence_randomly(Yetzur(stats="S")) for i in range(counter_D)]
+        [self.add_residence_randomly(Yetzur(isFast=True)) for i in range(counter_R)]
+        [self.add_residence_randomly(Yetzur()) for i in range(N)]
+
 
     def __str__(self):
         as_a_str = "num of residences: {} \n".format(self.num_residences)
+        as_a_str += "num of sicks: {} \n".format(self.num_sick)
         for i in range(self.matrix.shape[0]):
             for j in range(self.matrix.shape[1]):
                 as_a_str = as_a_str + str(self.matrix[i][j]) + "\t"
             as_a_str = as_a_str + "\n"
         return as_a_str
 
+class simulation:
 
-# check if we pass the threshold and return the adjusted P
-def passThreshold(sickPercentage):
-    if sickPercentage > T:
-        return P2
-    else:
-        return P1
+    def __init__(self, board):
+        self.board=board
+        self.generation=0
+
+    def next_genartion(self):
+        newBoard = Board()
+        for c in self.board:
+            if c.isFull:
+                c.get_old()
+                # TODO take care of sick here
+                #!!!
+                while newBoard.add_residence_to(c.content, c.content.next_location()):
+                    pass
+            self.generation +=1
+            self.board=newBoard
+
+        # check if we pass the threshold and return the adjusted P
+        def sick_chance():
+            if self.board.num_sick/self.board.num_residences > T:
+                return P2
+            else:
+                return P1
+
+
 
 
 # meanwhile this graphic doesn't related to the exercise - only played with it.
@@ -232,7 +267,7 @@ def show_Simulation():
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     newBoard = Board()
-    newBoard.add_residence_to(Yetzur(), ((2,2)))
+    newBoard.add_N_of_residences_randomly(20)
     print(newBoard)
     # ### בדיקה  לראות כמה תאים ריקים יש לפני האתחול של היצורים במיקומים רנדומליים
     # leng = []
