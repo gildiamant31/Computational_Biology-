@@ -30,6 +30,7 @@ class Yetzur:
         self.isFast = isFast  # true or false , tell us if this object can move 10 cells in one direction
         self.location = location
         self.sickTime=0
+        self.generation = 1 # necessary for the moving from one board to a new one
 
     def get_sick(self):
         self.isHealthy = self.isRecovered = False
@@ -39,6 +40,7 @@ class Yetzur:
 
     def get_older(self):
         self.sickTime+=1
+        self.generation+=1
         if self.sickTime > X:
             self.sickTime=0
             self.get_recovered()
@@ -133,7 +135,6 @@ class Board:
         counter_D = counter_D - counter_DR
         counter_R= counter_R - counter_DR
         N = N - counter_R - counter_D - counter_DR
-        simple_counter = 0
         [self.add_residence_randomly(Yetzur(isFast=True, stats="S")) for i in range(counter_DR)]
         [self.add_residence_randomly(Yetzur(stats="S")) for i in range(counter_D)]
         [self.add_residence_randomly(Yetzur(isFast=True)) for i in range(counter_R)]
@@ -149,7 +150,7 @@ class Board:
             as_a_str = as_a_str + "\n"
         return as_a_str
 
-class simulation:
+class Simulation:
 
     def __init__(self, board):
         self.board=board
@@ -157,22 +158,36 @@ class simulation:
 
     def next_genartion(self):
         newBoard = Board()
-        for c in self.board:
-            if c.isFull:
-                c.get_old()
-                # TODO take care of sick here
-                #!!!
+        matrix = self.board.matrix
+        # TypeError: 'Board' object is not iterable and also need to use to for loops - change your code
+        for i in range(matrix.shape[0]):
+            for j in range(matrix.shape[1]):
+                c = matrix[i][j]
+                if c.isFull:
+                    c.get_old()
+                    if self.search_sick_neghibors(c):
+                        if random.randrange(0,100) < self.sick_chance()*100:
+                            c.content.get_sick()
                 while newBoard.add_residence_to(c.content, c.content.next_location()):
                     pass
             self.generation +=1
             self.board=newBoard
 
-        # check if we pass the threshold and return the adjusted P
-        def sick_chance():
-            if self.board.num_sick/self.board.num_residences > T:
-                return P2
-            else:
-                return P1
+    def search_sick_neghibors(self,residence):
+        neghibors = residence.get_neghibors_and_self_indexes
+        for ne in  neghibors:
+            if self.board.matrix[ne[0]][ne[1]].isFull & self.board.matrix[ne[0]][ne[1]].content.isSick:
+                # add this condition to check that it isn't a Yetzur from next generation.
+                if self.board.matrix[ne[0]][ne[1]].content.generation == residence.generation:
+                    return True
+        return False
+
+    # check if we pass the threshold and return the adjusted P
+    def sick_chance(self):
+        if self.board.num_sick / self.board.num_residences > T:
+            return P2
+        else:
+            return P1
 
 
 
@@ -269,6 +284,18 @@ if __name__ == '__main__':
     newBoard = Board()
     newBoard.add_N_of_residences_randomly(20)
     print(newBoard)
+    # few tests
+    i = random.randrange(0,100)
+    print(i)
+    while i < 60:
+        print("succeed"+str(i))
+        i = random.randrange(0, 100)
+
+    # leng =[]
+    # for i in range(newBoard.matrix.shape[0]):
+    #     for j in range(newBoard.matrix.shape[1]):
+    #         leng.append(newBoard.matrix[i][j])
+    # print(len(leng))
     # ### בדיקה  לראות כמה תאים ריקים יש לפני האתחול של היצורים במיקומים רנדומליים
     # leng = []
     # for i in range(200):
