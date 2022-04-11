@@ -4,7 +4,7 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 
-matrix_size = (200, 200)
+matrix_size = (5, 5)
 D = 0.5  # % of initial sick people
 N = (200 * 200) * (70 / 100)  # initial number of people in the module - start with 70% of the automate size
 M = 1 / 9  # possibility of moving to each near cell (or staying in place) in the matrix
@@ -17,7 +17,7 @@ directions = ['up', 'down', 'right', 'left', 'bootomright', 'bootomleft', 'uprig
 
 
 class Yetzur:
-    def __init__(self, location, stats="H", isFast=False):
+    def __init__(self, location=((0,0)), stats="H", isFast=False):
         assert stats in ["H", "S", "R"], str(
             stats) + "Yetzur can be is stats of H/S/R only"  # H/S/R for healthy/Sick/Recoverd
         self.isHealthy = self.isSick = self.isRecovered = False
@@ -40,7 +40,7 @@ class Yetzur:
 
     def next_location(self):
         if not self.isFast:
-            return  random.choice(self.get_neghibors_and_self_indexes())
+            return random.choice(self.get_neghibors_and_self_indexes())
         else:
             vert_change = random.choice(range(-10, 11))
             new_vert = (self.location[0] + vert_change) % matrix_size[0]
@@ -58,10 +58,10 @@ class Cell:
         self.isFull = isFull
         self.content = content
 
-    def add_content(self, new_yetzur , new_location):
+    def add_content(self, new_yetzur, new_location):
         assert not self.isFull, "tried to fill filled cell"
         self.content = new_yetzur
-        self.content.location =[new_location[0],new_location[1]]
+        self.content.location = ((new_location[0], new_location[1]))
         self.isFull = True
 
     def remove_content(self):
@@ -71,43 +71,67 @@ class Cell:
         self.content = None
         return old_cont
 
+    def __str__(self):
+        if self.isFull:
+            return "Y"
+        else:
+            return "E"
+
 
 class Board:
-    def __init__(self, size=matrix_size):
-        self.matrix = np.full(matrix_size, Cell())
+    def __init__(self):
+        vSite = np.vectorize(Cell)
+        init_arry = np.arange(matrix_size[0]*matrix_size[1]).reshape(matrix_size)
+        self.matrix = np.empty(matrix_size, dtype=object)
+        self.matrix[:, :] = vSite(init_arry)
+        # self.matrix = np.full(matrix_size, #())
+        self.num_residences = 0
 
-    # TODO update residence location
-    def add_residence_to(self,residence, new_location):
+    def add_residence_to(self, residence, new_location):
         if self.matrix[new_location[0]][new_location[1]].isFull:
             return False
         else:
-            self.matrix[new_location[0]][new_location[1]].add_content(residence,(new_location[0],new_location[1]))
+            self.matrix[new_location[0]][new_location[1]].add_content(residence, (new_location[0], new_location[1]))
+            self.num_residences += 1
+            residence.location = new_location
             return True
 
-    def remove_residence_from(self,location):
-        return self.matrix[location[0],location[1]].remove_content()
+    def remove_residence_from(self, location):
+        self.num_residences -= 1
+        return self.matrix[location[0], location[1]].remove_content()
 
-    def add_residence_randomly(self ,residence):
-        while(not self.add_residence_to(residence,(random.choice(range(0,matrix_size[0])),random.choice(range(0,matrix_size[1]))))):
-            return False
+    def add_residence_randomly(self, residence):
+        while (not self.add_residence_to(residence, (
+        random.choice(range(0, matrix_size[0])), random.choice(range(0, matrix_size[1]))))):
+            # return False
             pass
 
-    def add_N_of_residence_randomly(self, N):
-        counter_R = int(R*N)  # for faster people
+
+
+    def add_N_of_residences_randomly(self, N):
+        counter_R = int(R * N)  # for faster people
         counter_D = int(D * N)  # for sick
-        simple_counter =0
+        simple_counter = 0
         for i in range(int(N)):
             residence = Yetzur([0, 0])
             if counter_D > 0:
                 residence.isSick = True
-                residence .isHealthy =False
-                counter_D -=1
+                residence.isHealthy = False
+                counter_D -= 1
             if counter_R > 0:
                 residence.isFast = True
-                counter_R -=1
+                counter_R -= 1
             if not self.add_residence_randomly(residence):
-                simple_counter+=1
+                simple_counter += 1
                 print(simple_counter)
+
+    def __str__(self):
+        as_a_str = "num of residences: {} \n".format(self.num_residences)
+        for i in range(self.matrix.shape[0]):
+            for j in range(self.matrix.shape[1]):
+                as_a_str = as_a_str + str(self.matrix[i][j]) + "\t"
+            as_a_str = as_a_str + "\n"
+        return as_a_str
 
 
 # check if we pass the threshold and return the adjusted P
@@ -207,21 +231,23 @@ def show_Simulation():
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    newBoard =Board()
-    ### בדיקה  לראות כמה תאים ריקים יש לפני האתחול של היצורים במיקומים רנדומליים
-    leng = []
-    for i in range(200):
-        for j in range(200):
-            if not newBoard.matrix[i][j].isFull:
-                leng.append(j)
-    print(len(leng))
-    ## האתחול - מדפיס כמה תאים התמלאו (הוספתי ספירה בכל פעם שתא מתמלא)
-    newBoard.add_N_of_residence_randomly(N)
-    ### בדיקה  לראות כמה תאים ריקים יש אחרי האתחול של היצורים במיקומים רנדומליים
-    leng = []
-    for i in range(200):
-        for j in range(200):
-            if not newBoard.matrix[i][j].isFull:
-                leng.append(j)
-    print(len(leng))
+    newBoard = Board()
+    newBoard.add_residence_to(Yetzur(), ((2,2)))
+    print(newBoard)
+    # ### בדיקה  לראות כמה תאים ריקים יש לפני האתחול של היצורים במיקומים רנדומליים
+    # leng = []
+    # for i in range(200):
+    #     for j in range(200):
+    #         if not newBoard.matrix[i][j].isFull:
+    #             leng.append(j)
+    # print(len(leng))
+    # ## האתחול - מדפיס כמה תאים התמלאו (הוספתי ספירה בכל פעם שתא מתמלא)
+    # newBoard.add_N_of_residence_randomly(N)
+    # ### בדיקה  לראות כמה תאים ריקים יש אחרי האתחול של היצורים במיקומים רנדומליים
+    # leng = []
+    # for i in range(200):
+    #     for j in range(200):
+    #         if not newBoard.matrix[i][j].isFull:
+    #             leng.append(j)
+    # print(len(leng))
     # show_Simulation()
