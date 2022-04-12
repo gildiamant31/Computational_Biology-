@@ -4,13 +4,13 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 
-matrix_size = (200, 200)
+matrix_size = (5, 5)
 D = 0.5  # % of initial sick people
 N = (200 * 200) * (70 / 100)  # initial number of people in the module - start with 70% of the automate size
 M = 1 / 9  # possibility of moving to each near cell (or staying in place) in the matrix
 R = 0.05  # % of faster people
-P1 = 0.2  # possibility of infect close people
-T = 20  # percentage of sick people threshold which after it P var is going down
+P1 = 0.9  # possibility of infect close people
+T = 100  # percentage of sick people threshold which after it P var is going down
 P2 = 0.1  # possibility of infect close people when we pass the threshold (T var)
 X = 5  # number of generation for being weak and infect other people.
 directions = ['up', 'down', 'right', 'left', 'bootomright', 'bootomleft', 'upright', 'upleft', 'stay']
@@ -39,11 +39,12 @@ class Yetzur:
         self.sickTime = 1
 
     def get_older(self):
-        self.sickTime += 1
         self.generation += 1
-        if self.sickTime > X:
-            self.sickTime = 0
-            self.get_recovered()
+        if self.isSick:
+            self.sickTime += 1
+            if self.sickTime > X:
+                self.sickTime = 0
+                self.get_recovered()
 
     def get_recovered(self):
         self.isHealthy = self.isSick = False
@@ -52,17 +53,20 @@ class Yetzur:
 
     def next_location(self):
         if not self.isFast:
-            return random.choice(self.get_neghibors_and_self_indexes())
+            choice = random.choice(self.get_neghibors_and_self_indexes())
+            return choice
         else:
             vert_change = random.choice(range(-10, 11))
             new_vert = (self.location[0] + vert_change) % matrix_size[0]
             horiz_change = random.choice(range(-10, 11))
             new_horiz = (self.location[1] + horiz_change) % matrix_size[1]
-            return tuple([new_vert, new_horiz])
+            choice = tuple([new_vert, new_horiz])
+            return choice
 
     def get_neghibors_and_self_indexes(self):
-        return [tuple([(i + self.location[0]) % matrix_size[0], (j + self.location[1]) % matrix_size[1]]) for i in
-                range(-1, 2) for j in range(-1, 2)]
+        neighbours = [([(i + self.location[0]) % matrix_size[0], (j + self.location[1]) % matrix_size[1]]) for i in
+                       range(-1, 2) for j in range(-1, 2)]
+        return neighbours
 
 
 class Cell:
@@ -117,7 +121,7 @@ class Board:
             return True
 
     def remove_residence_from(self, location):
-        self.num_residences -= 1
+        # self.num_residences -= 1   why to use it ???? TODO remove it ?
         return self.matrix[location[0], location[1]].remove_content()
 
     def add_residence_randomly(self, residence):
@@ -161,29 +165,33 @@ class Simulation:
         for i in range(matrix.shape[0]):
             for j in range(matrix.shape[1]):
                 c = matrix[i][j]
+                # check if the cell full
                 if c.isFull:
                     c.content.get_older()
-                    if self.search_sick_neghibors(c):
-                        # residence can be sick in possibility of P
-                        if random.randrange(0, 100) < self.sick_chance() * 100:
-                            c.content.get_sick()
-                while newBoard.add_residence_to(c.content, c.content.next_location()):
-                    pass
-            self.generation += 1
-            self.board = newBoard
+                    # check if the residence sick or recovered (continue if he isn't one of them)
+                    if (not c.content.isSick) & (not c.content.isRecovered):
+                        if self.search_sick_neghibors(c.content):
+                            # residence can be sick in possibility of P
+                            if random.randrange(0, 100) < self.sick_chance() * 100:
+                                c.content.get_sick()
+                    while newBoard.add_residence_to(c.content, c.content.next_location()):
+                        pass
+        self.generation += 1
+        self.board = newBoard
 
     def search_sick_neghibors(self, residence):
-        neghibors = residence.get_neghibors_and_self_indexes
+        neghibors = residence.get_neghibors_and_self_indexes()
         for ne in neghibors:
-            if self.board.matrix[ne[0]][ne[1]].isFull & self.board.matrix[ne[0]][ne[1]].content.isSick:
+            if self.board.matrix[ne[0]][ne[1]].isFull:
                 # add this condition to check that it isn't a Yetzur from next generation.
-                if self.board.matrix[ne[0]][ne[1]].content.generation == residence.generation:
+                if self.board.matrix[ne[0]][ne[1]].content.isSick & \
+                        self.board.matrix[ne[0]][ne[1]].content.generation == residence.generation:
                     return True
         return False
 
     # check if we pass the threshold and return the adjusted P
     def sick_chance(self):
-        if self.board.num_sick / self.board.num_residences > T:
+        if 100*(self.board.num_sick / self.board.num_residences) > T:
             return P2
         else:
             return P1
@@ -237,13 +245,12 @@ def show_Simulation(board):
     textRect3 = text3.get_rect()
     textRect3.center = (950, 300)
 
-
     # -------- Main Program Loop -----------
     # while not done:
     # --- Main event loop
     while not done:
         for event in pygame.event.get():  # User did something
-            if event.type == pygame.QUIT: # If user clicked close
+            if event.type == pygame.QUIT:  # If user clicked close
                 done = True  # Flag that we are done so we exit this loop
             # use esc button to exit
             elif event.type == pygame.KEYDOWN:
@@ -294,9 +301,17 @@ def show_Simulation(board):
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     newBoard = Board()
-    newBoard.add_N_of_residences_randomly(int(8000))
-    print(newBoard)
-    show_Simulation(newBoard)
+    newBoard.add_N_of_residences_randomly(int(20))
+    simulation = Simulation(newBoard)
+    done =False
+    print(simulation.board)
+    while not done:
+        simulation.next_genartion()
+        print(simulation.board)
+        if simulation.board.num_sick<1:
+            done =True
+
+    #show_Simulation(newBoard)
 
     # leng =[]
     # for i in range(newBoard.matrix.shape[0]):
