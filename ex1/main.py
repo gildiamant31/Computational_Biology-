@@ -256,12 +256,16 @@ def show_Simulation(simulation):
     text1 = font.render('Healthy', True, GREEN, BLUE)
     text2 = font.render('Infected', True, RED, BLUE)
     text3 = font.render('Empty Cell', True, WHITE, BLUE)
+    text4 = font.render('Number of Creatures: ' + str(simulation.board.num_residences), True, BLUE, WHITE)
+
     textRect1 = text1.get_rect()
-    textRect1.center = (950, 100)
+    textRect1.center = (1050, 100)
     textRect2 = text2.get_rect()
-    textRect2.center = (950, 200)
+    textRect2.center = (1050, 200)
     textRect3 = text3.get_rect()
-    textRect3.center = (950, 300)
+    textRect3.center = (1050, 300)
+    textRect4 = text4.get_rect()
+    textRect4.center = (1050, 400)
 
     # -------- Main Program Loop -----------
     # while not done:
@@ -284,10 +288,19 @@ def show_Simulation(simulation):
 
         # If you want a background image, replace this clear with blit'ing the
         # background image.
+        text5 = font.render('Number of infected: ' + str(simulation.board.num_sick), True, RED, WHITE)
+        text6 = font.render('Number of Generation: ' + str(simulation.generation), True, BLUE, WHITE)
+        textRect5 = text5.get_rect()
+        textRect5.center = (1050, 500)
+        textRect6 = text6.get_rect()
+        textRect6.center = (1050, 600)
         screen.fill(BLACK)
         screen.blit(text1, textRect1)
         screen.blit(text2, textRect2)
         screen.blit(text3, textRect3)
+        screen.blit(text4, textRect4)
+        screen.blit(text5, textRect5)
+        screen.blit(text6, textRect6)
         # --- Drawing code should go here
         # Draw the grid
         for row in range(matrix_size[0]):
