@@ -64,7 +64,7 @@ class Yetzur:
         return choice
 
     def get_neghibors_and_self_indexes(self):
-        neighbours = [([(i + self.location[0]) % matrix_size[0], (j + self.location[1]) % matrix_size[1]]) for i in
+        neighbours = [tuple([(i + self.location[0]) % matrix_size[0], (j + self.location[1]) % matrix_size[1]]) for i in
                       range(-1, 2) for j in range(-1, 2)]
         return neighbours
 
@@ -185,8 +185,8 @@ class Simulation:
                     new_location_isFull=True
                     while new_location_isFull:
                         new_location = resid.next_location()
-                        new_location_isFull = newBoard[new_location[1]][new_location[2]].isFull & \
-                                              self_matrix[new_location[1]][new_location[2]].isFull
+                        new_location_isFull = newBoard.matrix[new_location[0]][new_location[1]].isFull | \
+                                              self_matrix[new_location[0]][new_location[1]].isFull
                     assert newBoard.add_residence_to(resid, new_location), "should be empty but is full"
 
         self.generation += 1
