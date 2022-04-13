@@ -4,13 +4,13 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 
-matrix_size = (5, 5)
-D = 0.5  # % of initial sick people
-N = (200 * 200) * (70 / 100)  # initial number of people in the module - start with 70% of the automate size
+matrix_size = (200, 200)
+D = 0.1  # % of initial sick people
+N = (200 * 200) * (60 / 100)  # initial number of people in the module - start with 70% of the automate size
 M = 1 / 9  # possibility of moving to each near cell (or staying in place) in the matrix
 R = 0.05  # % of faster people
 P1 = 0.2  # possibility of infect close people
-T = 100  # percentage of sick people threshold which after it P var is going down
+T = 25  # percentage of sick people threshold which after it P var is going down
 P2 = 0.1  # possibility of infect close people when we pass the threshold (T var)
 X = 5  # number of generation for being weak and infect other people.
 directions = ['up', 'down', 'right', 'left', 'bootomright', 'bootomleft', 'upright', 'upleft', 'stay']
@@ -114,7 +114,6 @@ class Board:
 
             return True
 
-
     def remove_residence_from(self, location):
         self.num_residences -= 1
         res = self.matrix[location[0], location[1]].remove_content()
@@ -182,7 +181,7 @@ class Simulation:
                             if random.randrange(0, 100) < sick_chance * 100:
                                 resid.get_sick()
                     # try to add to next place until we get True for successful adding
-                    new_location_isFull=True
+                    new_location_isFull = True
                     while new_location_isFull:
                         new_location = resid.next_location()
                         new_location_isFull = newBoard.matrix[new_location[0]][new_location[1]].isFull | \
@@ -216,9 +215,8 @@ class Simulation:
                     self_matrix[i][j].content.get_older()
 
 
-
 # meanwhile this graphic doesn't related to the exercise - only played with it.
-def show_Simulation(board):
+def show_Simulation(simulation):
     # Define some colors
     BLACK = (0, 0, 0)
     WHITE = (255, 255, 255)  # empty cell
@@ -295,7 +293,7 @@ def show_Simulation(board):
         for row in range(matrix_size[0]):
             for column in range(matrix_size[1]):
                 color = WHITE
-                c = board.matrix[row][column]
+                c = simulation.board.matrix[row][column]
                 if c.isFull:
                     if c.content.isSick:
                         color = RED
@@ -313,25 +311,29 @@ def show_Simulation(board):
 
         # --- Limit to 60 frames per second
         clock.tick(60)
+        simulation.next_genartion()
+        if simulation.board.num_sick < 1:
+            done = True
 
     # Close the window and quit.
     pygame.quit()
+    print(simulation.generation)
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     newBoard = Board()
-    newBoard.add_N_of_residences_randomly(20)
+    newBoard.add_N_of_residences_randomly(int(N))
     simulation = Simulation(newBoard)
-    done = False
-    print(simulation.board)
-    while not done:
-        simulation.next_genartion()
-        print(simulation.board)
-        if simulation.board.num_sick < 1:
-            done = True
+    # done = False
+    # print(simulation.board)
+    # while not done:
+    #     simulation.next_genartion()
+    #     print(simulation.board)
+    #     if simulation.board.num_sick < 1:
+    #         done = True
 
-    # show_Simulation(newBoard)
+    show_Simulation(simulation)
 
     # leng =[]
     # for i in range(newBoard.matrix.shape[0]):
