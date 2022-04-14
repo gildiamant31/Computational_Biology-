@@ -1,12 +1,14 @@
 import pygame
-import sys
+from tkinter import *
+from tkinter import messagebox
 import random
 import numpy as np
 import matplotlib.pyplot as plt
 
 matrix_size = (200, 200)
 D = 0.01  # % of initial sick people
-N = int(float(matrix_size[0]) * float(matrix_size[1]) * 0.8)  # initial number of people in the module - start with 70% of the automate size
+N = int(float(matrix_size[0]) * float(
+    matrix_size[1]) * 0.8)  # initial number of people in the module - start with 70% of the automate size
 M = 1 / 9  # possibility of moving to each near cell (or staying in place) in the matrix
 R = 0.2  # % of faster people
 P1 = 0.9  # possibility of infect close people
@@ -241,7 +243,7 @@ def show_Simulation(simulation):
 
     # Set the width and height of the screen [width, height]
     size = [1200, 800]
-    flags = pygame.DOUBLEBUF | pygame.HWSURFACE 
+    flags = pygame.DOUBLEBUF | pygame.HWSURFACE
     screen = pygame.display.set_mode(size, flags)
     # set the tittle of the game
     pygame.display.set_caption("WRAP_AROUND Covid-19 automate:")
@@ -251,7 +253,7 @@ def show_Simulation(simulation):
 
     # Used to manage how fast the screen updates
     clock = pygame.time.Clock()
-    
+
     font_legend = pygame.font.Font('freesansbold.ttf', 14)
     font = pygame.font.Font('freesansbold.ttf', 20)
     leg_hea = font_legend.render('Healthy', True, GREEN, BLUE)
@@ -259,7 +261,7 @@ def show_Simulation(simulation):
     leg_emp = font_legend.render('Empty Cell', True, WHITE, BLUE)
     text_num_crea = font.render('Number of Creatures: ' + str(simulation.board.num_residences), True, BLUE, WHITE)
     text_exit = font.render('press Esc to exist', True, WHITE, BLUE)
-    
+
     leg_heaRect = leg_hea.get_rect()
     leg_heaRect.center = (850, 80)
     leg_infeRect = leg_infe.get_rect()
@@ -338,27 +340,85 @@ def show_Simulation(simulation):
     # print(simulation.generation)
 
 
+def getInput():
+    window = Tk()
+    window.title("Simulation Parameters")
+    main_lst = []
+    label1 = Label(window, text="D: ", padx=20, pady=10)
+    label2 = Label(window, text="R: ", padx=20, pady=10)
+    label3 = Label(window, text="N: ", padx=20, pady=10)
+    label4 = Label(window, text="P1 (before threshold): ", padx=20, pady=10)
+    label5 = Label(window, text="T: ", padx=20, pady=10)
+    label6 = Label(window, text="P2 (after threshold): ", padx=20, pady=10)
+    label7 = Label(window, text="X: ", padx=20, pady=10)
+    d = Entry(window, width=30, borderwidth=5)
+    d.insert(END, str(D))
+    r = Entry(window, width=30, borderwidth=5)
+    r.insert(END, str(R))
+    n = Entry(window, width=30, borderwidth=5)
+    n.insert(END, str(N))
+    p1 = Entry(window, width=30, borderwidth=5)
+    p1.insert(END, str(P1))
+    t = Entry(window, width=30, borderwidth=5)
+    t.insert(END, str(T))
+    p2 = Entry(window, width=30, borderwidth=5)
+    p2.insert(END, str(P2))
+    x = Entry(window, width=30, borderwidth=5)
+    x.insert(END, str(X))
+    Exit = Button(window, text="Start simulation", padx=20, pady=10, command=window.quit)
+    label1.grid(row=0, column=0)
+    label2.grid(row=1, column=0)
+    label3.grid(row=2, column=0)
+    label4.grid(row=3, column=0)
+    label5.grid(row=4, column=0)
+    label6.grid(row=5, column=0)
+    label7.grid(row=6, column=0)
+    d.grid(row=0, column=1)
+    r.grid(row=1, column=1)
+    n.grid(row=2, column=1)
+    p1.grid(row=3, column=1)
+    t.grid(row=4, column=1)
+    p2.grid(row=5, column=1)
+    x.grid(row=6, column=1)
+    Exit.grid(row=10, column=0, columnspan=2)
+    window.mainloop()
+    return [float(d.get()), float(r.get()), int(n.get()), float(p1.get()), int(t.get()), float(p2.get()), int(x.get())]
+
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    inputInfo = getInput()
+    D = inputInfo[0]
+    R = inputInfo[1]
+    N = inputInfo[2]
+    P1 = inputInfo[3]
+    T = inputInfo[4]
+    P2 = inputInfo[5]
+    X = inputInfo[6]
+    messagebox.showinfo("Information", "The data has been added successfully\n"
+                                       "The simulation can take some time, Enjoy!!")
     newBoard = Board()
     newBoard.add_N_of_residences_randomly(int(N))
     simulation = Simulation(newBoard)
     done = False
-    sick_history=[]
+    sick_history = []
     while not done:
         print(simulation.generation)
         print(simulation.sick_chance())
         sick_history.append(simulation.board.num_sick)
         simulation.next_genartion()
-        #print(simulation.board)
-        #if simulation.generation%5 ==0:
-            #plt.plot(range(simulation.generation), sick_history)
-            #plt.show()
+        # print(simulation.board)
+        # if simulation.generation%5 ==0:
+        # plt.plot(range(simulation.generation), sick_history)
+        # plt.show()
         if simulation.board.num_sick < 10:
             done = True
 
     plt.plot(range(simulation.generation), sick_history)
+    plt.xlabel("Number of Generations")
+    plt.ylabel("Number of sick organisms")
+    plt.title(
+        "N = " + str(N) + ", R = " + str(int(R * 100)) + "%, D = " + str(int(D * 100)) + "%, P1 = " + str(P1) + ", P2 = " +
+        str(P2) + ", T = " + str(T) + "%, X = " + str(X))
     plt.show()
-    #show_Simulation(simulation)
-
-
+    # show_Simulation(simulation)
