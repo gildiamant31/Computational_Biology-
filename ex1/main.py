@@ -5,14 +5,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 matrix_size = (200, 200)
-D = 0.1  # % of initial sick people
-N = (200 * 200) * (60 / 100)  # initial number of people in the module - start with 70% of the automate size
+D = 0.01  # % of initial sick people
+N = int(float(matrix_size[0]) * float(matrix_size[1]) * 0.8)  # initial number of people in the module - start with 70% of the automate size
 M = 1 / 9  # possibility of moving to each near cell (or staying in place) in the matrix
-R = 0.05  # % of faster people
-P1 = 0.2  # possibility of infect close people
-T = 25  # percentage of sick people threshold which after it P var is going down
+R = 0.2  # % of faster people
+P1 = 0.9  # possibility of infect close people
+T = 10  # percentage of sick people threshold which after it P var is going down
 P2 = 0.1  # possibility of infect close people when we pass the threshold (T var)
-X = 5  # number of generation for being weak and infect other people.
+X = 3  # number of generation for being weak and infect other people.
 directions = ['up', 'down', 'right', 'left', 'bootomright', 'bootomleft', 'upright', 'upleft', 'stay']
 
 
@@ -225,7 +225,7 @@ def show_Simulation(simulation):
     RED = (255, 0, 0)  # sick person
     # each cell's size
     WIDTH = 3
-    HEIGHT = 3
+    HEIGHT = 2
     MARGIN = 1
     # set the array
     grid = []
@@ -240,8 +240,8 @@ def show_Simulation(simulation):
     pygame.init()
 
     # Set the width and height of the screen [width, height]
-    size = [1300, 1000]
-    flags = pygame.DOUBLEBUF | pygame.HWSURFACE | pygame.FULLSCREEN
+    size = [1200, 800]
+    flags = pygame.DOUBLEBUF | pygame.HWSURFACE 
     screen = pygame.display.set_mode(size, flags)
     # set the tittle of the game
     pygame.display.set_caption("WRAP_AROUND Covid-19 automate:")
@@ -251,21 +251,25 @@ def show_Simulation(simulation):
 
     # Used to manage how fast the screen updates
     clock = pygame.time.Clock()
-
-    font = pygame.font.Font('freesansbold.ttf', 32)
-    text1 = font.render('Healthy', True, GREEN, BLUE)
-    text2 = font.render('Infected', True, RED, BLUE)
-    text3 = font.render('Empty Cell', True, WHITE, BLUE)
-    text4 = font.render('Number of Creatures: ' + str(simulation.board.num_residences), True, BLUE, WHITE)
-
-    textRect1 = text1.get_rect()
-    textRect1.center = (1050, 100)
-    textRect2 = text2.get_rect()
-    textRect2.center = (1050, 200)
-    textRect3 = text3.get_rect()
-    textRect3.center = (1050, 300)
-    textRect4 = text4.get_rect()
-    textRect4.center = (1050, 400)
+    
+    font_legend = pygame.font.Font('freesansbold.ttf', 14)
+    font = pygame.font.Font('freesansbold.ttf', 20)
+    leg_hea = font_legend.render('Healthy', True, GREEN, BLUE)
+    leg_infe = font_legend.render('Infected', True, RED, BLUE)
+    leg_emp = font_legend.render('Empty Cell', True, WHITE, BLUE)
+    text_num_crea = font.render('Number of Creatures: ' + str(simulation.board.num_residences), True, BLUE, WHITE)
+    text_exit = font.render('press Esc to exist', True, WHITE, BLUE)
+    
+    leg_heaRect = leg_hea.get_rect()
+    leg_heaRect.center = (850, 80)
+    leg_infeRect = leg_infe.get_rect()
+    leg_infeRect.center = (850, 100)
+    leg_empRect = leg_emp.get_rect()
+    leg_empRect.center = (850, 120)
+    text_num_creaRect = text_num_crea.get_rect()
+    text_num_creaRect.center = (1000, 380)
+    text_exitRect = text_exit.get_rect()
+    text_exitRect.center = (600, 750)
 
     # -------- Main Program Loop -----------
     # while not done:
@@ -288,19 +292,20 @@ def show_Simulation(simulation):
 
         # If you want a background image, replace this clear with blit'ing the
         # background image.
-        text5 = font.render('Number of infected: ' + str(simulation.board.num_sick), True, RED, WHITE)
-        text6 = font.render('Number of Generation: ' + str(simulation.generation), True, BLUE, WHITE)
-        textRect5 = text5.get_rect()
-        textRect5.center = (1050, 500)
-        textRect6 = text6.get_rect()
-        textRect6.center = (1050, 600)
-        screen.fill(BLACK)
-        screen.blit(text1, textRect1)
-        screen.blit(text2, textRect2)
-        screen.blit(text3, textRect3)
-        screen.blit(text4, textRect4)
-        screen.blit(text5, textRect5)
-        screen.blit(text6, textRect6)
+        text_num_infe = font.render('Number of infected: ' + str(simulation.board.num_sick), True, RED, WHITE)
+        text_num_gene = font.render('Number of Generation: ' + str(simulation.generation), True, BLUE, WHITE)
+        text_num_infeRec = text_num_infe.get_rect()
+        text_num_infeRec.center = (1000, 480)
+        text_num_geneRect = text_num_gene.get_rect()
+        text_num_geneRect.center = (1000, 580)
+        screen.fill((40, 20, 128))
+        screen.blit(leg_hea, leg_heaRect)
+        screen.blit(leg_infe, leg_infeRect)
+        screen.blit(leg_emp, leg_empRect)
+        screen.blit(text_num_crea, text_num_creaRect)
+        screen.blit(text_num_infe, text_num_infeRec)
+        screen.blit(text_num_gene, text_num_geneRect)
+        screen.blit(text_exit, text_exitRect)
         # --- Drawing code should go here
         # Draw the grid
         for row in range(matrix_size[0]):
@@ -322,15 +327,15 @@ def show_Simulation(simulation):
         # --- Go ahead and update the screen with what we've drawn.
         pygame.display.flip()
 
-        # --- Limit to 60 frames per second
-        clock.tick(60)
+        # --- Limit to 1 frame per second
+        clock.tick(1)
         simulation.next_genartion()
         if simulation.board.num_sick < 1:
             done = True
 
     # Close the window and quit.
     pygame.quit()
-    print(simulation.generation)
+    # print(simulation.generation)
 
 
 # Press the green button in the gutter to run the script.
@@ -338,35 +343,22 @@ if __name__ == '__main__':
     newBoard = Board()
     newBoard.add_N_of_residences_randomly(int(N))
     simulation = Simulation(newBoard)
-    # done = False
-    # print(simulation.board)
-    # while not done:
-    #     simulation.next_genartion()
-    #     print(simulation.board)
-    #     if simulation.board.num_sick < 1:
-    #         done = True
+    done = False
+    sick_history=[]
+    while not done:
+        print(simulation.generation)
+        print(simulation.sick_chance())
+        sick_history.append(simulation.board.num_sick)
+        simulation.next_genartion()
+        #print(simulation.board)
+        #if simulation.generation%5 ==0:
+            #plt.plot(range(simulation.generation), sick_history)
+            #plt.show()
+        if simulation.board.num_sick < 10:
+            done = True
 
-    show_Simulation(simulation)
+    plt.plot(range(simulation.generation), sick_history)
+    plt.show()
+    #show_Simulation(simulation)
 
-    # leng =[]
-    # for i in range(newBoard.matrix.shape[0]):
-    #     for j in range(newBoard.matrix.shape[1]):
-    #         leng.append(newBoard.matrix[i][j])
-    # print(len(leng))
-    # ### בדיקה  לראות כמה תאים ריקים יש לפני האתחול של היצורים במיקומים רנדומליים
-    # leng = []
-    # for i in range(200):
-    #     for j in range(200):
-    #         if not newBoard.matrix[i][j].isFull:
-    #             leng.append(j)
-    # print(len(leng))
-    # ## האתחול - מדפיס כמה תאים התמלאו (הוספתי ספירה בכל פעם שתא מתמלא)
-    # newBoard.add_N_of_residence_randomly(N)
-    # ### בדיקה  לראות כמה תאים ריקים יש אחרי האתחול של היצורים במיקומים רנדומליים
-    # leng = []
-    # for i in range(200):
-    #     for j in range(200):
-    #         if not newBoard.matrix[i][j].isFull:
-    #             leng.append(j)
-    # print(len(leng))
-    # show_Simulation()
+
