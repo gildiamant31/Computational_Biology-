@@ -217,7 +217,8 @@ class Simulation:
                     self_matrix[i][j].content.get_older()
 
 
-# meanwhile this graphic doesn't related to the exercise - only played with it.
+
+
 def show_Simulation(simulation):
     # Define some colors
     BLACK = (0, 0, 0)
@@ -250,30 +251,33 @@ def show_Simulation(simulation):
 
     # Loop until the user clicks the close button.
     done = False
-
+    ## try to add pause option
+    # pause = False
     # Used to manage how fast the screen updates
     clock = pygame.time.Clock()
 
-    font_legend = pygame.font.Font('freesansbold.ttf', 14)
+    font_legend = pygame.font.Font('freesansbold.ttf', 18)
     font = pygame.font.Font('freesansbold.ttf', 20)
     leg_hea = font_legend.render('Healthy', True, GREEN, BLUE)
     leg_infe = font_legend.render('Infected', True, RED, BLUE)
     leg_emp = font_legend.render('Empty Cell', True, WHITE, BLUE)
     text_num_crea = font.render('Number of Creatures: ' + str(simulation.board.num_residences), True, BLUE, WHITE)
     text_exit = font.render('press Esc to exist', True, WHITE, BLUE)
+    # text_pause = font.render('press on Space to pause the simulation', True, WHITE, BLUE)
 
     leg_heaRect = leg_hea.get_rect()
-    leg_heaRect.center = (850, 80)
+    leg_heaRect.center = (865, 80)
     leg_infeRect = leg_infe.get_rect()
-    leg_infeRect.center = (850, 100)
+    leg_infeRect.center = (865, 120)
     leg_empRect = leg_emp.get_rect()
-    leg_empRect.center = (850, 120)
+    leg_empRect.center = (865, 160)
     text_num_creaRect = text_num_crea.get_rect()
     text_num_creaRect.center = (1000, 380)
     text_exitRect = text_exit.get_rect()
     text_exitRect.center = (600, 750)
-
-    # -------- Main Program Loop -----------
+    # text_pauseRect = text_pause.get_rect()
+    # text_pauseRect.center = (600, 650)
+    # # -------- Main Program Loop -----------
     # while not done:
     # --- Main event loop
     while not done:
@@ -285,6 +289,24 @@ def show_Simulation(simulation):
                 if event.key == pygame.K_ESCAPE:
                     done = True
 
+            ## try to add pause option but can't continue with it
+            # if event.type == pygame.KEYDOWN:
+            #     if event.key == pygame.K_SPACE:
+            #         pause = True
+            # elif event.type == pygame.KEYDOWN:
+            #     if event.key == pygame.K_KP_ENTER:
+            #         pause = False
+            #
+            #
+        # if pause:
+        #     text_continue = font.render('press Enter to continue with simulation', True, WHITE, BLUE)
+        #     text_continueRect = text_continue.get_rect()
+        #     text_continueRect.center = (600, 650)
+        #     screen.fill((40, 20, 128))
+        #     screen.blit(text_continue, text_continueRect)
+        #     pygame.display.update()
+        #     print("idiot")
+        #     continue
         # --- Game logic should go here
 
         # --- Screen-clearing code goes here
@@ -308,6 +330,7 @@ def show_Simulation(simulation):
         screen.blit(text_num_infe, text_num_infeRec)
         screen.blit(text_num_gene, text_num_geneRect)
         screen.blit(text_exit, text_exitRect)
+        # screen.blit(text_pause, text_pauseRect)
         # --- Drawing code should go here
         # Draw the grid
         for row in range(matrix_size[0]):
@@ -327,6 +350,7 @@ def show_Simulation(simulation):
                                   HEIGHT])
 
         # --- Go ahead and update the screen with what we've drawn.
+        pygame.display.update()
         pygame.display.flip()
 
         # --- Limit to 1 frame per second
@@ -382,7 +406,10 @@ def getInput():
     x.grid(row=6, column=1)
     Exit.grid(row=10, column=0, columnspan=2)
     window.mainloop()
-    return [float(d.get()), float(r.get()), int(n.get()), float(p1.get()), int(t.get()), float(p2.get()), int(x.get())]
+    values = [float(d.get()), float(r.get()), int(n.get()), float(p1.get()), int(t.get()), float(p2.get()), int(x.get())]
+    window.destroy()
+    window.quit()
+    return values
 
 
 # Press the green button in the gutter to run the script.
@@ -400,25 +427,27 @@ if __name__ == '__main__':
     newBoard = Board()
     newBoard.add_N_of_residences_randomly(int(N))
     simulation = Simulation(newBoard)
-    done = False
-    sick_history = []
-    while not done:
-        print(simulation.generation)
-        print(simulation.sick_chance())
-        sick_history.append(simulation.board.num_sick)
-        simulation.next_genartion()
-        # print(simulation.board)
-        # if simulation.generation%5 ==0:
-        # plt.plot(range(simulation.generation), sick_history)
-        # plt.show()
-        if simulation.board.num_sick < 10:
-            done = True
-
-    plt.plot(range(simulation.generation), sick_history)
-    plt.xlabel("Number of Generations")
-    plt.ylabel("Number of sick organisms")
-    plt.title(
-        "N = " + str(N) + ", R = " + str(int(R * 100)) + "%, D = " + str(int(D * 100)) + "%, P1 = " + str(P1) + ", P2 = " +
-        str(P2) + ", T = " + str(T) + "%, X = " + str(X))
-    plt.show()
-    # show_Simulation(simulation)
+    # done = False
+    # sick_history = []
+    # while not done:
+    #     print(simulation.generation)
+    #     print(simulation.sick_chance())
+    #     sick_history.append(simulation.board.num_sick)
+    #     simulation.next_genartion()
+    #     # print(simulation.board)
+    #     # if simulation.generation%5 ==0:
+    #     # plt.plot(range(simulation.generation), sick_history)
+    #     # plt.show()
+    #     if simulation.board.num_sick < 10:
+    #         done = True
+    #
+    # plt.plot(range(simulation.generation), sick_history)
+    # plt.xlabel("Number of Generations")
+    # plt.ylabel("Number of sick organisms")
+    # plt.title(
+    #     "N = " + str(N) + ", R = " + str(int(R * 100)) + "%, D = " + str(int(D * 100)) + "%, P1 = " + str(P1) + ", P2 = " +
+    #     str(P2) + ", T = " + str(T) + "%, X = " + str(X))
+    # plt.show()
+    show_Simulation(simulation)
+    messagebox.showinfo("בגדול זה קורס מסריח", "Simulation was over\n"
+                                       "רון אונגר כלב!!")
