@@ -427,27 +427,27 @@ if __name__ == '__main__':
     newBoard = Board()
     newBoard.add_N_of_residences_randomly(int(N))
     simulation = Simulation(newBoard)
-    # done = False
-    # sick_history = []
-    # while not done:
-    #     print(simulation.generation)
-    #     print(simulation.sick_chance())
-    #     sick_history.append(simulation.board.num_sick)
-    #     simulation.next_genartion()
-    #     # print(simulation.board)
-    #     # if simulation.generation%5 ==0:
-    #     # plt.plot(range(simulation.generation), sick_history)
-    #     # plt.show()
-    #     if simulation.board.num_sick < 10:
-    #         done = True
-    #
-    # plt.plot(range(simulation.generation), sick_history)
-    # plt.xlabel("Number of Generations")
-    # plt.ylabel("Number of sick organisms")
-    # plt.title(
-    #     "N = " + str(N) + ", R = " + str(int(R * 100)) + "%, D = " + str(int(D * 100)) + "%, P1 = " + str(P1) + ", P2 = " +
-    #     str(P2) + ", T = " + str(T) + "%, X = " + str(X))
-    # plt.show()
-    show_Simulation(simulation)
-    messagebox.showinfo("בגדול זה קורס מסריח", "Simulation was over\n"
-                                       "רון אונגר כלב!!")
+    done = False
+    sick_history = []
+    while not done:
+        print(simulation.generation)
+        print(simulation.sick_chance())
+        sick_history.append(simulation.board.num_sick)
+        simulation.next_genartion()
+        # print(simulation.board)
+        # if simulation.generation%5 ==0:
+        # plt.plot(range(simulation.generation), sick_history)
+        # plt.show()
+        if simulation.board.num_sick < 10:
+            done = True
+
+    plt.plot(range(simulation.generation), sick_history)
+    plt.xlabel("Number of Generations")
+    plt.ylabel("Number of sick organisms")
+    plt.title(
+        "N = " + str(N) + ", R = " + str(int(R * 100)) + "%, D = " + str(int(D * 100)) + "%, P1 = " + str(P1) + ", P2 = " +
+        str(P2) + ", T = " + str(T) + "%, X = " + str(X))
+    plt.show()
+    # #show_Simulation(simulation)
+    # #messagebox.showinfo("בגדול זה קורס מסריח", "Simulation was over\n"
+    #                                    "רון אונגר כלב!!")
