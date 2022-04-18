@@ -217,11 +217,9 @@ class Simulation:
                     self_matrix[i][j].content.get_older()
 
 
-
-
+# this function create visualization for the simulation while using pygame
 def show_Simulation(simulation):
     # Define some colors
-    BLACK = (0, 0, 0)
     WHITE = (255, 255, 255)  # empty cell
     BLUE = (0, 0, 128)
     GREEN = (0, 255, 0)  # healthy/regular people
@@ -230,15 +228,6 @@ def show_Simulation(simulation):
     WIDTH = 3
     HEIGHT = 2
     MARGIN = 1
-    # set the array
-    grid = []
-    for row in range(matrix_size[0]):
-        grid.append([])
-        for column in range(matrix_size[1]):
-            grid[row].append(0)
-    # Set row 1, cell 5 to one. (Remember rows and
-    # column numbers start at zero.)
-    grid[0][0] = 1
 
     pygame.init()
 
@@ -249,13 +238,11 @@ def show_Simulation(simulation):
     # set the tittle of the game
     pygame.display.set_caption("WRAP_AROUND Covid-19 automate:")
 
-    # Loop until the user clicks the close button.
+    # Loop until the user clicks the close button or Esc or no more sick organisms.
     done = False
-    ## try to add pause option
-    # pause = False
     # Used to manage how fast the screen updates
     clock = pygame.time.Clock()
-
+    # define all texts in the simulation graphic
     font_legend = pygame.font.Font('freesansbold.ttf', 18)
     font = pygame.font.Font('freesansbold.ttf', 20)
     leg_hea = font_legend.render('Healthy', True, GREEN, BLUE)
@@ -263,8 +250,6 @@ def show_Simulation(simulation):
     leg_emp = font_legend.render('Empty Cell', True, WHITE, BLUE)
     text_num_crea = font.render('Number of Creatures: ' + str(simulation.board.num_residences), True, BLUE, WHITE)
     text_exit = font.render('press Esc to exist', True, WHITE, BLUE)
-    # text_pause = font.render('press on Space to pause the simulation', True, WHITE, BLUE)
-
     leg_heaRect = leg_hea.get_rect()
     leg_heaRect.center = (865, 80)
     leg_infeRect = leg_infe.get_rect()
@@ -275,8 +260,6 @@ def show_Simulation(simulation):
     text_num_creaRect.center = (1000, 380)
     text_exitRect = text_exit.get_rect()
     text_exitRect.center = (600, 750)
-    # text_pauseRect = text_pause.get_rect()
-    # text_pauseRect.center = (600, 650)
     # # -------- Main Program Loop -----------
     # while not done:
     # --- Main event loop
@@ -289,39 +272,14 @@ def show_Simulation(simulation):
                 if event.key == pygame.K_ESCAPE:
                     done = True
 
-            ## try to add pause option but can't continue with it
-            # if event.type == pygame.KEYDOWN:
-            #     if event.key == pygame.K_SPACE:
-            #         pause = True
-            # elif event.type == pygame.KEYDOWN:
-            #     if event.key == pygame.K_KP_ENTER:
-            #         pause = False
-            #
-            #
-        # if pause:
-        #     text_continue = font.render('press Enter to continue with simulation', True, WHITE, BLUE)
-        #     text_continueRect = text_continue.get_rect()
-        #     text_continueRect.center = (600, 650)
-        #     screen.fill((40, 20, 128))
-        #     screen.blit(text_continue, text_continueRect)
-        #     pygame.display.update()
-        #     print("idiot")
-        #     continue
-        # --- Game logic should go here
-
-        # --- Screen-clearing code goes here
-
-        # Here, we clear the screen to white. Don't put other drawing commands
-        # above this, or they will be erased with this command.
-
-        # If you want a background image, replace this clear with blit'ing the
-        # background image.
+        # define the text which change on the main loop
         text_num_infe = font.render('Number of infected: ' + str(simulation.board.num_sick), True, RED, WHITE)
         text_num_gene = font.render('Number of Generation: ' + str(simulation.generation), True, BLUE, WHITE)
         text_num_infeRec = text_num_infe.get_rect()
         text_num_infeRec.center = (1000, 480)
         text_num_geneRect = text_num_gene.get_rect()
         text_num_geneRect.center = (1000, 580)
+        # draw the background and all the texts
         screen.fill((40, 20, 128))
         screen.blit(leg_hea, leg_heaRect)
         screen.blit(leg_infe, leg_infeRect)
@@ -330,9 +288,7 @@ def show_Simulation(simulation):
         screen.blit(text_num_infe, text_num_infeRec)
         screen.blit(text_num_gene, text_num_geneRect)
         screen.blit(text_exit, text_exitRect)
-        # screen.blit(text_pause, text_pauseRect)
-        # --- Drawing code should go here
-        # Draw the grid
+        # Draw the matrix according to cell situation
         for row in range(matrix_size[0]):
             for column in range(matrix_size[1]):
                 color = WHITE
@@ -349,8 +305,6 @@ def show_Simulation(simulation):
                                   WIDTH,
                                   HEIGHT])
 
-        # --- Go ahead and update the screen with what we've drawn.
-        pygame.display.update()
         pygame.display.flip()
 
         # --- Limit to 1 frame per second
@@ -361,9 +315,9 @@ def show_Simulation(simulation):
 
     # Close the window and quit.
     pygame.quit()
-    # print(simulation.generation)
 
 
+#  this function create an input window for simulation parameters with tkinter library
 def getInput():
     window = Tk()
     window.title("Simulation Parameters")
@@ -406,7 +360,9 @@ def getInput():
     x.grid(row=6, column=1)
     Exit.grid(row=10, column=0, columnspan=2)
     window.mainloop()
-    values = [float(d.get()), float(r.get()), int(n.get()), float(p1.get()), int(t.get()), float(p2.get()), int(x.get())]
+    # convert the input values from string to numeric values (int or float)
+    values = [float(d.get()), float(r.get()), int(n.get()), float(p1.get()), int(t.get()), float(p2.get()),
+              int(x.get())]
     window.destroy()
     window.quit()
     return values
@@ -415,6 +371,7 @@ def getInput():
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     inputInfo = getInput()
+    # set the global variables as the values of user's input
     D = inputInfo[0]
     R = inputInfo[1]
     N = inputInfo[2]
@@ -422,32 +379,33 @@ if __name__ == '__main__':
     T = inputInfo[4]
     P2 = inputInfo[5]
     X = inputInfo[6]
-    messagebox.showinfo("Information", "The data has been added successfully\n"
-                                       "The simulation can take some time, Enjoy!!")
+    messagebox.showinfo("WRAP_AROUND Covid-19 automate", "The data has been added successfully\n"
+                                                         "The simulation can take some time, Enjoy!!")
     newBoard = Board()
     newBoard.add_N_of_residences_randomly(int(N))
     simulation = Simulation(newBoard)
-    done = False
-    sick_history = []
-    while not done:
-        print(simulation.generation)
-        print(simulation.sick_chance())
-        sick_history.append(simulation.board.num_sick)
-        simulation.next_genartion()
-        # print(simulation.board)
-        # if simulation.generation%5 ==0:
-        # plt.plot(range(simulation.generation), sick_history)
-        # plt.show()
-        if simulation.board.num_sick < 10:
-            done = True
+    show_Simulation(simulation)
+    messagebox.showinfo("WRAP_AROUND Covid-19 automate", "Simulation was over")
 
-    plt.plot(range(simulation.generation), sick_history)
-    plt.xlabel("Number of Generations")
-    plt.ylabel("Number of sick organisms")
-    plt.title(
-        "N = " + str(N) + ", R = " + str(int(R * 100)) + "%, D = " + str(int(D * 100)) + "%, P1 = " + str(P1) + ", P2 = " +
-        str(P2) + ", T = " + str(T) + "%, X = " + str(X))
-    plt.show()
-    # #show_Simulation(simulation)
-    # #messagebox.showinfo("בגדול זה קורס מסריח", "Simulation was over\n"
-    #                                    "רון אונגר כלב!!")
+    # code for plots
+    # done = False
+    # sick_history = []
+    # while not done:
+    #     print(simulation.generation)
+    #     print(simulation.sick_chance())
+    #     sick_history.append(simulation.board.num_sick)
+    #     simulation.next_genartion()
+    #     # print(simulation.board)
+    #     # if simulation.generation%5 ==0:
+    #     # plt.plot(range(simulation.generation), sick_history)
+    #     # plt.show()
+    #     if simulation.board.num_sick < 10:
+    #         done = True
+    #
+    # plt.plot(range(simulation.generation), sick_history)
+    # plt.xlabel("Number of Generations")
+    # plt.ylabel("Number of sick organisms")
+    # plt.title(
+    #     "N = " + str(N) + ", R = " + str(int(R * 100)) + "%, D = " + str(int(D * 100)) + "%, P1 = " + str(P1) + ", P2 = " +
+    #     str(P2) + ", T = " + str(T) + "%, X = " + str(X))
+    # plt.show()
