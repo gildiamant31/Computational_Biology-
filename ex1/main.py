@@ -391,22 +391,28 @@ def getInput():
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    inputInfo = getInput()
-    # set the global variables as the values of user's input
-    D = inputInfo[0]
-    R = inputInfo[1]
-    N = inputInfo[2]
-    P1 = inputInfo[3]
-    T = inputInfo[4]
-    P2 = inputInfo[5]
-    X = inputInfo[6]
-    messagebox.showinfo("WRAP_AROUND Covid-19 automate", "The data was added successfully")
-    messagebox.showwarning("WRAP_AROUND Covid-19 automate", "The simulation can take some time, Enjoy!!")
-    newBoard = Board()
-    newBoard.add_N_of_residences_randomly(int(N))
-    simulation = Simulation(newBoard)
-    show_Simulation(simulation)
-    messagebox.showinfo("WRAP_AROUND Covid-19 automate", "Simulation was over")
+    # create loop for start the simulation over and over again
+    stop = False
+    while not stop:
+        inputInfo = getInput()
+        # set the global variables as the values of user's input
+        D = inputInfo[0]
+        R = inputInfo[1]
+        N = inputInfo[2]
+        P1 = inputInfo[3]
+        T = inputInfo[4]
+        P2 = inputInfo[5]
+        X = inputInfo[6]
+        messagebox.showinfo("WRAP_AROUND Covid-19 automate", "The data was added successfully")
+        messagebox.showwarning("WRAP_AROUND Covid-19 automate", "The simulation can take some time, Enjoy!!")
+        newBoard = Board()
+        newBoard.add_N_of_residences_randomly(int(N))
+        simulation = Simulation(newBoard)
+        show_Simulation(simulation)
+        ask_for_retry = messagebox.askyesno("WRAP_AROUND Covid-19 automate", "Simulation was over\n"
+                                                                            "Do you want to start the simulation again?")
+        if not ask_for_retry:
+            stop = True
 
     # code for plots
     # done = False
