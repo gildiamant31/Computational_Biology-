@@ -5,19 +5,21 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 
+# these are all the global variables which define in the instructions of this exercise.
+# they can be changed by the user while the input window is open
+
 matrix_size = (200, 200)
 D = 0.01  # % of initial sick people
 N = int(float(matrix_size[0]) * float(
     matrix_size[1]) * 0.8)  # initial number of people in the module - start with 70% of the automate size
-M = 1 / 9  # possibility of moving to each near cell (or staying in place) in the matrix
 R = 0.2  # % of faster people
 P1 = 0.9  # possibility of infect close people
 T = 10  # percentage of sick people threshold which after it P var is going down
 P2 = 0.1  # possibility of infect close people when we pass the threshold (T var)
 X = 3  # number of generation for being weak and infect other people.
-directions = ['up', 'down', 'right', 'left', 'bootomright', 'bootomleft', 'upright', 'upleft', 'stay']
 
 
+# this is the class of the organism in the simulation - it can be sick,healthy or recovered.
 class Yetzur:
     def __init__(self, location=((0, 0)), stats="H", isFast=False):
         assert stats in ["H", "S", "R"], str(
@@ -35,12 +37,14 @@ class Yetzur:
         self.sickTime = 0
         self.generation = 0  # necessary for the moving from one board to a new one
 
+    # make the organism be infected in Covid-19
     def get_sick(self):
         self.isHealthy = self.isRecovered = False
         self.isSick = True
         self.stats = "S"
         self.sickTime = 1
 
+    # make the organism older in one generation and also increase his sickness time if it is sick
     def get_older(self):
         self.generation += 1
         if self.isSick:
@@ -49,11 +53,14 @@ class Yetzur:
                 self.sickTime = 0
                 self.get_recovered()
 
+    # convert the organism to recover mode - not going to be sick again ever
     def get_recovered(self):
         self.isHealthy = self.isSick = False
         self.isRecovered = True
         self.stats = "R"
 
+    # get randomly location for the next generation of this organism
+    # If it is fast there are more indexes to choice from.
     def next_location(self):
         if not self.isFast:
             choice = random.choice(self.get_neghibors_and_self_indexes())
@@ -65,23 +72,27 @@ class Yetzur:
             choice = tuple([new_vert, new_horiz])
         return choice
 
+    # get all indexes near to this organism excluding its location
     def get_neghibors_and_self_indexes(self):
         neighbours = [tuple([(i + self.location[0]) % matrix_size[0], (j + self.location[1]) % matrix_size[1]]) for i in
                       range(-1, 2) for j in range(-1, 2)]
         return neighbours
 
 
+# class of cell which will contain the organism and will be part of the simulation's board
 class Cell:
     def __init__(self, isFull=False, content=None):
         self.isFull = isFull
         self.content = content
 
+    # Add organism to this Cell only if it empty
     def add_content(self, new_yetzur, new_location):
         assert not self.isFull, "tried to fill filled cell"
         self.content = new_yetzur
         self.content.location = ((new_location[0], new_location[1]))
         self.isFull = True
 
+    # remove organism from this Cell only if it full
     def remove_content(self):
         assert self.isFull, "cant clear empty cell"
         self.isFull = False
@@ -96,13 +107,16 @@ class Cell:
             return self.content.stats
 
 
+# class of board which contain cell matrix with 40000 Cell objects (200X200)
 class Board:
     def __init__(self):
+        # create a matrix of Cell object in size 200 X 200
         self.matrix = np.array([Cell() for i in range(matrix_size[0] * matrix_size[1])], dtype=object)
         self.matrix = self.matrix.reshape(matrix_size)
         self.num_residences = 0
         self.num_sick = 0
 
+    # add organism to specific location on board (only if it empty) & return true if it succeeded
     def add_residence_to(self, residence, new_location):
         assert self.matrix.size > self.num_residences, "tried to add residence to full matrix"
         if self.matrix[new_location[0]][new_location[1]].isFull:
@@ -123,12 +137,14 @@ class Board:
             self.num_sick -= 1
         return res
 
+    # add one organism to randomly location
     def add_residence_randomly(self, residence):
         # try to add to random place until we get True for successful adding
         while (not self.add_residence_to(residence, (
                 random.choice(range(0, matrix_size[0])), random.choice(range(0, matrix_size[1]))))):
             pass
 
+    # initial locating randomly all organisms on cells board
     def add_N_of_residences_randomly(self, N):
         counter_R = int(R * N)  # for faster people
         counter_D = int(D * N)  # for sick
@@ -141,6 +157,7 @@ class Board:
         [self.add_residence_randomly(Yetzur(isFast=True)) for i in range(counter_R)]
         [self.add_residence_randomly(Yetzur()) for i in range(N)]
 
+    # for printing the board as string - help for debugging
     def __str__(self):
         as_a_str = "num of residences: {} \n".format(self.num_residences)
         as_a_str += "num of sicks: {} \n".format(self.num_sick)
@@ -158,12 +175,14 @@ class Board:
         return True
 
 
+# class of simulation - contain the board of cell.
 class Simulation:
 
     def __init__(self, board):
         self.board = board
         self.generation = 0
 
+    # main function of the simulation which update the simulation to the next generation of it.
     def next_genartion(self):
         newBoard = Board()
         # for convinence
@@ -193,11 +212,11 @@ class Simulation:
         self.generation += 1
         self.board = newBoard
 
+    # search for each organism neighbors if one of them is infected
     def search_sick_neghibors(self, residence):
         neghibors = residence.get_neghibors_and_self_indexes()
         for ne in neghibors:
             if self.board.matrix[ne[0]][ne[1]].isFull:
-                # add this condition to check that it isn't a Yetzur from next generation.
                 if self.board.matrix[ne[0]][ne[1]].content.isSick:
                     return True
         return False
@@ -209,6 +228,7 @@ class Simulation:
         else:
             return P1
 
+    # get all cell matrix older in one generation
     def get_all_older(self):
         self_matrix = self.board.matrix
         for i in range(self_matrix.shape[0]):
@@ -317,7 +337,8 @@ def show_Simulation(simulation):
     pygame.quit()
 
 
-#  this function create an input window for simulation parameters with tkinter library
+# this function create an input window for simulation parameters with tkinter library.
+# it fills the values by default the variables as they were defined on the top of this script.
 def getInput():
     window = Tk()
     window.title("Simulation Parameters")
@@ -379,8 +400,8 @@ if __name__ == '__main__':
     T = inputInfo[4]
     P2 = inputInfo[5]
     X = inputInfo[6]
-    messagebox.showinfo("WRAP_AROUND Covid-19 automate", "The data has been added successfully\n"
-                                                         "The simulation can take some time, Enjoy!!")
+    messagebox.showinfo("WRAP_AROUND Covid-19 automate", "The data was added successfully")
+    messagebox.showwarning("WRAP_AROUND Covid-19 automate", "The simulation can take some time, Enjoy!!")
     newBoard = Board()
     newBoard.add_N_of_residences_randomly(int(N))
     simulation = Simulation(newBoard)
