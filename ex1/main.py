@@ -1,9 +1,23 @@
+## This code is for installing the packages##
+import sys
+import subprocess
+import pkg_resources
+
+required = {'pygame', 'tk', 'numpy'}
+installed = {pkg.key for pkg in pkg_resources.working_set}
+missing = required - installed
+
+if missing:
+    # implement pip as a subprocess:
+    subprocess.check_call([sys.executable, '-m', 'pip', '--disable-pip-version-check', 'install', *missing])
+
 import pygame
 from tkinter import *
 from tkinter import messagebox
 import random
 import numpy as np
-import matplotlib.pyplot as plt
+
+# import matplotlib.pyplot as plt
 
 # these are all the global variables which define in the instructions of this exercise.
 # they can be changed by the user while the input window is open
@@ -63,7 +77,7 @@ class Yetzur:
     def next_location(self):
         if not self.isFast:
             choice = random.choice(self.get_neghibors_and_self_indexes())
-        else: # If it is fast-yetzur there are more indexes to choice from.
+        else:  # If it is fast-yetzur there are more indexes to choice from.
             vert_change = random.choice(range(-10, 11))
             new_vert = (self.location[0] + vert_change) % matrix_size[0]
             horiz_change = random.choice(range(-10, 11))
@@ -100,14 +114,14 @@ class Cell:
         old_cont = self.content
         self.content = None
         return old_cont
-    
+
     # define the way a cell is trarsformed to str
     def __str__(self):
         if not self.isFull:
             return "E"
         else:
             if self.content.isSick:
-                return "S" 
+                return "S"
             else:
                 return "H"
 
@@ -139,6 +153,7 @@ class Board:
                 self.num_sick += 1
 
             return True
+
     # will remove residence from specific location on the board. and return it
     def remove_residence_from(self, location):
         self.num_residences -= 1
@@ -160,10 +175,10 @@ class Board:
         # counters of how much residence from each types according to global variables scpecification
         counter_R = int(R * N)  # for faster people
         counter_D = int(D * N)  # for sick
-        counter_DR = int(R * D) # for faster and sick
-        counter_D = counter_D - counter_DR 
+        counter_DR = int(R * D)  # for faster and sick
+        counter_D = counter_D - counter_DR
         counter_R = counter_R - counter_DR
-        N = N - counter_R - counter_D - counter_DR # for healthy and slow
+        N = N - counter_R - counter_D - counter_DR  # for healthy and slow
         # add residences to board
         [self.add_residence_randomly(Yetzur(isFast=True, stats="S")) for i in range(counter_DR)]
         [self.add_residence_randomly(Yetzur(stats="S")) for i in range(counter_D)]
@@ -179,6 +194,7 @@ class Board:
                 as_a_str = as_a_str + str(self.matrix[i][j]) + "\t"
             as_a_str = as_a_str + "\n"
         return as_a_str
+
 
 # class of simulation - contain the board of cells and run bio simulation on it.
 class Simulation:
@@ -432,7 +448,7 @@ if __name__ == '__main__':
         # run the Simulation
         run_and_show_Simulation(simulation)
         ask_for_retry = messagebox.askyesno("WRAP_AROUND Covid-19 automate", "Simulation was over\n"
-                                                                            "Do you want to start the simulation again?")
+                                                                             "Do you want to start the simulation again?")
         if not ask_for_retry:
             stop = True
 
