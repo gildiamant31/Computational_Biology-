@@ -1,15 +1,15 @@
-## This code is for installing the packages##
-import sys
-import subprocess
-import pkg_resources
-
-required = {'pygame', 'tk', 'numpy'}
-installed = {pkg.key for pkg in pkg_resources.working_set}
-missing = required - installed
-
-if missing:
-    # implement pip as a subprocess:
-    subprocess.check_call([sys.executable, '-m', 'pip', '--disable-pip-version-check', 'install', *missing])
+# ## This code is for installing the packages##
+# import sys
+# import subprocess
+# import pkg_resources
+#
+# required = {'pygame', 'tk', 'numpy'}
+# installed = {pkg.key for pkg in pkg_resources.working_set}
+# missing = required - installed
+#
+# if missing:
+#     # implement pip as a subprocess:
+#     subprocess.check_call([sys.executable, '-m', 'pip', '--disable-pip-version-check', 'install', *missing])
 
 import pygame
 from tkinter import *
@@ -294,7 +294,7 @@ def run_and_show_Simulation(simulation):
 
     # Loop until the user clicks the close button or Esc or no more sick organisms.
     done = False
-    # Used to manage how fast the screen updates
+    # Used to manage how fast tpython setup.py installhe screen updates
     clock = pygame.time.Clock()
     # define all texts in the simulation graphic
     font_legend = pygame.font.Font('freesansbold.ttf', 18)
