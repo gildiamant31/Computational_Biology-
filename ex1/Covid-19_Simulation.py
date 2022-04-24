@@ -1,15 +1,11 @@
-# ## This code is for installing the packages##
-# import sys
-# import subprocess
-# import pkg_resources
-#
-# required = {'pygame', 'tk', 'numpy'}
-# installed = {pkg.key for pkg in pkg_resources.working_set}
-# missing = required - installed
-#
-# if missing:
-#     # implement pip as a subprocess:
-#     subprocess.check_call([sys.executable, '-m', 'pip', '--disable-pip-version-check', 'install', *missing])
+import sys
+import os
+import pygame
+from tkinter import *
+from tkinter import messagebox
+import random
+import numpy as np
+
 
 import pygame
 from tkinter import *
@@ -24,8 +20,7 @@ import numpy as np
 
 matrix_size = (200, 200)
 D = 0.01  # % of initial sick people
-N = int(float(matrix_size[0]) * float(
-    matrix_size[1]) * 0.8)  # initial number of people in the module - start with 70% of the automate size
+N = 32000  # initial number of people in the module - start with 70% of the automate size
 R = 0.2  # % of faster people
 P1 = 0.9  # possibility of infect close people
 T = 10  # percentage of sick people threshold which after it P var is going down
@@ -173,17 +168,17 @@ class Board:
     # initilize 'N' of board's  residence according to global variables scpecification, and locate them randomaly
     def add_N_of_residences_randomly(self, N):
         # counters of how much residence from each types according to global variables scpecification
-        counter_R = int(R * N)  # for faster people
         counter_D = int(D * N)  # for sick
-        counter_DR = int(R * D)  # for faster and sick
-        counter_D = counter_D - counter_DR
+        counter_R = int(R * N)
+        counter_DR = int(R * counter_D)  # for faster and sick
         counter_R = counter_R - counter_DR
-        N = N - counter_R - counter_D - counter_DR  # for healthy and slow
+        counter_D = counter_D - counter_DR
+        counter_N = N - counter_D - counter_DR - counter_R # for healthy and slow
         # add residences to board
         [self.add_residence_randomly(Yetzur(isFast=True, stats="S")) for i in range(counter_DR)]
         [self.add_residence_randomly(Yetzur(stats="S")) for i in range(counter_D)]
         [self.add_residence_randomly(Yetzur(isFast=True)) for i in range(counter_R)]
-        [self.add_residence_randomly(Yetzur()) for i in range(N)]
+        [self.add_residence_randomly(Yetzur()) for i in range(counter_N)]
 
     # for printing the board as string - mainly for debugging
     def __str__(self):
@@ -297,8 +292,8 @@ def run_and_show_Simulation(simulation):
     # Used to manage how fast tpython setup.py installhe screen updates
     clock = pygame.time.Clock()
     # define all texts in the simulation graphic
-    font_legend = pygame.font.Font('freesansbold.ttf', 18)
-    font = pygame.font.Font('freesansbold.ttf', 20)
+    font_legend = pygame.font.SysFont('comicsans', 18)
+    font = pygame.font.SysFont('comicsans', 20)
     leg_hea = font_legend.render('Healthy', True, GREEN, BLUE)
     leg_infe = font_legend.render('Infected', True, RED, BLUE)
     leg_emp = font_legend.render('Empty Cell', True, WHITE, BLUE)
@@ -377,13 +372,13 @@ def getInput():
     window = Tk()
     window.title("Simulation Parameters")
     main_lst = []
-    label1 = Label(window, text="D: ", padx=20, pady=10)
-    label2 = Label(window, text="R: ", padx=20, pady=10)
-    label3 = Label(window, text="N: ", padx=20, pady=10)
-    label4 = Label(window, text="P1 (before threshold): ", padx=20, pady=10)
-    label5 = Label(window, text="T: ", padx=20, pady=10)
-    label6 = Label(window, text="P2 (after threshold): ", padx=20, pady=10)
-    label7 = Label(window, text="X: ", padx=20, pady=10)
+    label1 = Label(window, text="D(fraction of sick): ", padx=20, pady=10)
+    label2 = Label(window, text="R(fraction of fast): ", padx=20, pady=10)
+    label3 = Label(window, text="N(num of creatures): ", padx=20, pady=10)
+    label4 = Label(window, text="P1 (Infection chance before T threshold(fraction)): ", padx=20, pady=10)
+    label5 = Label(window, text="T(threshold(percent of people (Integer))) ", padx=20, pady=10)
+    label6 = Label(window, text="P2 (Infection chance after threshold(fraction)): ", padx=20, pady=10)
+    label7 = Label(window, text="X(num of genertion until recoverd): ", padx=20, pady=10)
     d = Entry(window, width=30, borderwidth=5)
     d.insert(END, str(D))
     r = Entry(window, width=30, borderwidth=5)
@@ -415,9 +410,24 @@ def getInput():
     x.grid(row=6, column=1)
     Exit.grid(row=10, column=0, columnspan=2)
     window.mainloop()
-    # convert the input values from string to numeric values (int or float)
-    values = [float(d.get()), float(r.get()), int(n.get()), float(p1.get()), int(t.get()), float(p2.get()),
-              int(x.get())]
+    try:
+        # convert the input values from string to numeric values (int or float)
+        values = [float(d.get()), float(r.get()), int(n.get()), float(p1.get()), int(t.get()), float(p2.get()),
+                int(x.get())]
+    except: # if its faild to convert that means  Input not valid - show message and exit
+        messagebox.showwarning("WRAP_AROUND Covid-19 automate", "ERRRORRRR!!!!! Input not valid")
+        sys.exit(-1)
+    for value in values:
+        if isinstance(value, float):
+            if not (0 <= value <=1):
+                messagebox.showwarning("WRAP_AROUND Covid-19 automate", "ERRRORRRR!!!!! Input not valid")
+                sys.exit(-1)
+    if values[2] < 0 or values[4] < 0 or values[6] < 0:
+        messagebox.showwarning("WRAP_AROUND Covid-19 automate", "ERRRORRRR!!!!! Input not valid")
+        sys.exit(-1)
+    if values[2] > matrix_size[0] * matrix_size[1]:
+        messagebox.showwarning("WRAP_AROUND Covid-19 automate", "ERRRORRRR!!!!! too much creaturs")
+        sys.exit(-1)        
     window.destroy()
     window.quit()
     return values
@@ -453,6 +463,11 @@ if __name__ == '__main__':
             stop = True
 
     # code for plots
+    # import matplotlib.pyplot as plt
+    # newBoard = Board()
+    # newBoard.add_N_of_residences_randomly(int(N))
+    # #     # crate the Simulation
+    # simulation = Simulation(newBoard)
     # done = False
     # sick_history = []
     # while not done:
@@ -466,7 +481,7 @@ if __name__ == '__main__':
     #     # plt.show()
     #     if simulation.board.num_sick < 10:
     #         done = True
-    #
+    
     # plt.plot(range(simulation.generation), sick_history)
     # plt.xlabel("Number of Generations")
     # plt.ylabel("Number of sick organisms")
