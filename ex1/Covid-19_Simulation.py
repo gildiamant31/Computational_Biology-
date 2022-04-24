@@ -1,3 +1,7 @@
+"""
+Gil Diamant 314978412
+Itamar Twersky 311587489 
+"""
 import sys
 import os
 import pygame
