@@ -7,13 +7,6 @@ import random
 import numpy as np
 
 
-import pygame
-from tkinter import *
-from tkinter import messagebox
-import random
-import numpy as np
-
-# import matplotlib.pyplot as plt
 
 # these are all the global variables which define in the instructions of this exercise.
 # they can be changed by the user while the input window is open
@@ -417,14 +410,17 @@ def getInput():
     except: # if its faild to convert that means  Input not valid - show message and exit
         messagebox.showwarning("WRAP_AROUND Covid-19 automate", "ERRRORRRR!!!!! Input not valid")
         sys.exit(-1)
-    for value in values:
+    # check every fraction/float input, if its unvalid - show message and exit
+    for value in values: 
         if isinstance(value, float):
             if not (0 <= value <=1):
                 messagebox.showwarning("WRAP_AROUND Covid-19 automate", "ERRRORRRR!!!!! Input not valid")
                 sys.exit(-1)
-    if values[2] < 0 or values[4] < 0 or values[6] < 0:
+    # check the numeric values, if its unvalid - show message and exit
+    if values[2] < 0 or values[4] < 0 or values[6] < 0: 
         messagebox.showwarning("WRAP_AROUND Covid-19 automate", "ERRRORRRR!!!!! Input not valid")
         sys.exit(-1)
+    #  if total number of creaturs is more then the matrix size - show message and exit
     if values[2] > matrix_size[0] * matrix_size[1]:
         messagebox.showwarning("WRAP_AROUND Covid-19 automate", "ERRRORRRR!!!!! too much creaturs")
         sys.exit(-1)        
