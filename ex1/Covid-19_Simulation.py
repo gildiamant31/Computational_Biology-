@@ -1,6 +1,6 @@
 """
-Gil Diamant 314978412
-Itamar Twersky 311587489 
+Gil Diamant
+Itamar Twersky
 """
 import sys
 import os
