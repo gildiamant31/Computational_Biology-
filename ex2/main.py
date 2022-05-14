@@ -2,14 +2,12 @@
 Gil Diamant
 Itamar Twersky
 """
-
-import pygame
+# import matplotlib.pyplot as plt
+# import pygame
 from tkinter import *
 from tkinter import messagebox
 import random
 import numpy as np
-
-# import matplotlib.pyplot as plt
 
 # these are all the global variables which define in the instructions of this exercise.
 # they can be changed by the user while the input window is open
@@ -68,13 +66,19 @@ class GenericAlgo:
     # make crossover from two solutions
     def crossover(self, sol1, sol2):
         crossover_sol = []
-        random_row = np.random.randint(0, matrix_size[0])
+        random_row = np.random.randint(0, matrix_size[0] - 1)
         [crossover_sol.append(sol1[i]) for i in range(0, random_row)]
         [crossover_sol.append(sol2[i]) for i in range(random_row, matrix_size[0])]
         return crossover_sol
 
+    # create one mutation in random indexes -> replace the current value to another in the relevant range
     def create_mutation(self, sol):
-        pass
+        indexes = np.random.randint(0, matrix_size[0] - 1, 2)
+        current_num = sol[indexes[0]][indexes[1]]
+        new_num = np.random.randint(1, matrix_size[0])
+        while current_num == new_num:
+            new_num = np.random.randint(1, matrix_size[0])
+        sol[indexes[0]][indexes[1]] = new_num
 
     def evaluation(self, sol):
         pass
@@ -96,9 +100,4 @@ class GenericAlgo:
 if __name__ == '__main__':
     openInputFile()
     random_sols = initial_random_sols()
-    print(random_sols[0])
-    print(random_sols[2])
     algo = GenericAlgo(random_sols)
-    cross_sol = algo.crossover(random_sols[0],random_sols[2])
-    cross_sol2 = algo.crossover(cross_sol,random_sols[2])
-    print(cross_sol2)
