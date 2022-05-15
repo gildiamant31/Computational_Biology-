@@ -62,26 +62,63 @@ def initial_random_sols():
 class GenericAlgo:
     def __init__(self, sols):
         self.sols = sols
+        self.scores = [-1] * len(self.sols)
 
-    # make crossover from two solutions
+    # make crossover from two parents solutions
     def crossover(self, sol1, sol2):
         crossover_sol = []
+        # get random rows number.
         random_row = np.random.randint(0, matrix_size[0] - 1)
+        # take this numbers of rows from first solution matrix
         [crossover_sol.append(sol1[i]) for i in range(0, random_row)]
+        # take the rest numbers of rows from the second solution matrix
         [crossover_sol.append(sol2[i]) for i in range(random_row, matrix_size[0])]
         return crossover_sol
 
     # create one mutation in random indexes -> replace the current value to another in the relevant range
     def create_mutation(self, sol):
+        # get random indexes
         indexes = np.random.randint(0, matrix_size[0] - 1, 2)
         current_num = sol[indexes[0]][indexes[1]]
+        # get new number value for replacing the old value
         new_num = np.random.randint(1, matrix_size[0])
+        # stop this loop when the numbers are different
         while current_num == new_num:
             new_num = np.random.randint(1, matrix_size[0])
         sol[indexes[0]][indexes[1]] = new_num
 
-    def evaluation(self, sol):
-        pass
+    def evaluation(self):
+        for index, sol in enumerate(self.sols):
+            # our score will be negative, we will add score for every mismatch.
+            # if everything it's good the biggest score will be 0
+            negative_score = 0
+            # check if there are duplicate in every row
+            for row in sol:
+                negative_score += self.checkUnique(row)
+            # check if there are duplicate in every column
+            for col in range(matrix_size[0]):
+                negative_score += self.checkUnique(sol[:, col])
+            negative_score += self.checkSignsPlaces(sol)
+            self.scores[index] = negative_score
+
+    # check if there are duplicates in every row or column - if there is it return one otherwise it return 0
+    def checkUnique(self, row_or_col):
+        if len(row_or_col) != len(np.unique(row_or_col)):
+            return 1
+        return 0
+
+    # check according to "bigger than" sign locations on the board if it valid.
+    # if it isn't, we add 1 to the negative score and return it
+    def checkSignsPlaces(self, sol):
+        signs_score = 0
+        for i in range(len(signs_coords)):
+            # first number before the sign
+            first_num = sol[signs_coords[i][0][0]][signs_coords[i][0][1]]
+            # second number after the sign
+            second_num = sol[signs_coords[i][1][0]][signs_coords[i][1][1]]
+            if first_num <= second_num:
+                signs_score += 1
+        return signs_score
 
     def next_generation(self):
         pass
@@ -101,3 +138,4 @@ if __name__ == '__main__':
     openInputFile()
     random_sols = initial_random_sols()
     algo = GenericAlgo(random_sols)
+
