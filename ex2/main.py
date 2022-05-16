@@ -80,6 +80,16 @@ class GenericAlgo:
         # get random indexes
         indexes = np.random.randint(0, matrix_size[0] - 1, 2)
         current_num = sol[indexes[0]][indexes[1]]
+        stop = False
+        # we don't want to create mutation on the permanent input values
+        # we will do this loop until we get random value which not appear in the input values
+        while not stop:
+            for i in range(len(init_digits_coords)):
+                if tuple(indexes) in init_digits_coords[i]:
+                    stop = False
+                    indexes = np.random.randint(0, matrix_size[0] - 1, 2)
+                    break
+                stop = True
         # get new number value for replacing the old value
         new_num = np.random.randint(1, matrix_size[0])
         # stop this loop when the numbers are different
@@ -138,4 +148,3 @@ if __name__ == '__main__':
     openInputFile()
     random_sols = initial_random_sols()
     algo = GenericAlgo(random_sols)
-
