@@ -63,6 +63,7 @@ class GenericAlgo:
     def __init__(self, sols):
         self.sols = sols
         self.scores = [-1] * len(self.sols)
+        self.greatest_sol_idx = -10
 
     # make crossover from two parents solutions
     def crossover(self, sol1, sol2):
@@ -73,6 +74,7 @@ class GenericAlgo:
         [crossover_sol.append(sol1[i]) for i in range(0, random_row)]
         # take the rest numbers of rows from the second solution matrix
         [crossover_sol.append(sol2[i]) for i in range(random_row, matrix_size[0])]
+        crossover_sol = np.array(crossover_sol)
         return crossover_sol
 
     # create one mutation in random indexes -> replace the current value to another in the relevant range
@@ -131,13 +133,39 @@ class GenericAlgo:
         return signs_score
 
     def next_generation(self):
-        pass
+        self.evaluation()
+        # minimum score is the greatest solution
+        self.greatest_sol_idx = min(self.scores)
+        new_sols = []
+        new_sols.append(self.sols[self.greatest_sol_idx])
+        done = False
+        while not done:
+            # TODO improve the randomly choose - create some priority for the better score (the lower in our case)
+            index = np.random.randint(0, pop_size - 1)
+            sol = self.sols[index]
+            crossover_chance = 15
+            if random.randrange(0, 100) < crossover_chance:
+                cross_index = np.random.randint(0, pop_size - 1)
+                sol_cross = self.sols[cross_index]
+                sol = self.crossover(sol, sol_cross)
+            mutation_chance = 15
+            if random.randrange(0, 100) < mutation_chance:
+                self.create_mutation(sol)
+            new_sols.append(sol)
+            if len(new_sols) == len(self.sols):
+                done = True
+        self.sols = new_sols
 
     def solve_convergence(self):
         pass
 
     def run_algo(self):
-        pass
+        for i in range(15000):
+            print(self.scores)
+            self.next_generation()
+            if self.scores[self.greatest_sol_idx] == 0:
+                print(self.sols[self.greatest_sol_idx])
+                break
 
     # necessary ?
     def fitness(self):
@@ -148,3 +176,4 @@ if __name__ == '__main__':
     openInputFile()
     random_sols = initial_random_sols()
     algo = GenericAlgo(random_sols)
+    algo.run_algo()
