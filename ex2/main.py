@@ -135,7 +135,7 @@ class GenericAlgo:
     def next_generation(self):
         self.evaluation()
         # minimum score is the greatest solution
-        self.greatest_sol_idx = min(self.scores)
+        self.greatest_sol_idx = self.scores.index(min(self.scores))
         new_sols = []
         new_sols.append(self.sols[self.greatest_sol_idx])
         done = False
@@ -161,7 +161,7 @@ class GenericAlgo:
 
     def run_algo(self):
         for i in range(15000):
-            print(self.scores)
+            print(self.scores[self.greatest_sol_idx])
             self.next_generation()
             if self.scores[self.greatest_sol_idx] == 0:
                 print(self.sols[self.greatest_sol_idx])
