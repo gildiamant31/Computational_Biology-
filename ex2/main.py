@@ -17,8 +17,8 @@ pop_size = 100 # size of population
 init_digits_coords = []  # list of tuples of coordinates and a value of it, look like this -> ((1,2),4)
 signs_coords = []  # list of tuples of coordinates tuple pairs represent the sign location, look like this -> ((1,2),(1,5))
 # hyper parameters
-crossover_chance = 15
-mutation_chance = 50
+crossover_chance = 25
+mutation_chance = 80
 
 
 
@@ -177,7 +177,6 @@ class GenericAlgo:
         self.best_sol_idx = np.argmin(self.scores)
         self.best_val = self.scores[self.best_sol_idx]
         new_sols = []
-        new_sols.append(self.sols[self.best_sol_idx].copy())
         done = False
         while not done:
             # get create new solution fou to fittnes
@@ -185,16 +184,17 @@ class GenericAlgo:
             sol = self.sols[index].copy()
             if random.randrange(0, 100) < crossover_chance:
                 # choose one of the chosen sols te crossover
-                if len(new_sols) < 0:
-                    cross_index = np.random.randint(0, len(new_sols))
+                if len(new_sols) > 1:
+                    cross_index = np.random.randint(0, len(new_sols)-1)
                     sol_cross = new_sols[cross_index]
                     sol, sol_cross  = self.crossover(sol, sol_cross)
             # TODO only one mutation? maybe more
             if random.randrange(0, 100) < mutation_chance:
                 self.create_mutation(sol)
             new_sols.append(sol)
-            if len(new_sols) == len(self.sols):
+            if (len(new_sols) + 1)  == len(self.sols):
                 done = True
+        new_sols.append(self.sols[self.best_sol_idx].copy())
         self.sols = new_sols
 
 
@@ -211,8 +211,12 @@ class GenericAlgo:
         for i in range(150000):
             if self.best_val != self.prevBest_val:
                 print(self.best_val)
-            if (i % 10000) == 0:
+            if (i % 5000) == 0  and i != 0:
                 print("gen: {} score:{}".format(i,self.best_val))
+                global mutation_chance
+                mutation_chance -= 10
+                global crossover_chance
+                crossover_chance -= 3
             self.next_generation()
             if self.best_val == 0:
                 print(self.best_val)
