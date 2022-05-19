@@ -4,40 +4,39 @@ Itamar Twersky
 """
 # import matplotlib.pyplot as plt
 # import pygame
-from tkinter import *
-from tkinter import messagebox
+#from tkinter import *
+#from tkinter import messagebox
+from os import stat
 import random
 import numpy as np
+import sys
 
-# these are all the global variables which define in the instructions of this exercise.
-# they can be changed by the user while the input window is open
-
-matrix_size = []
-pop_size = 100
-init_digits_num = 0
+# global variables to be determind from file
+matrix_size = [] 
+pop_size = 100 # size of population
 init_digits_coords = []  # list of tuples of coordinates and a value of it, look like this -> ((1,2),4)
-signs_num = 0
-signs_coords = []  # list of tuples of coordinates tuple pairs represent the sign location,
+signs_coords = []  # list of tuples of coordinates tuple pairs represent the sign location, look like this -> ((1,2),(1,5))
+# hyper parameters
+crossover_chance = 15
+mutation_chance = 50
 
-
-# look like this -> ((1,2),(1,5))
 
 
 # get input from input files with details on the matrix and saved it on global variables
 def openInputFile():
-    with open('input/input1.txt') as f:
+    # TODO edit path
+    with open("ex2/input/input1.txt") as f:
         lines = f.readlines()
     lines = [lines[i].strip() for i in range(len(lines))]
     matrix_size.append(int(lines[0]))
     matrix_size.append(int(lines[0]))
     init_digits_num = int(lines[1])
-
     if init_digits_num > 0:
         for i in range(2, init_digits_num + 2):
             # remove one from any index because index starts from 0 and in the file it starts from 1
             new_given_num = ((int(lines[i][0]) - 1, int(lines[i][2]) - 1), int(lines[i][4]))
             init_digits_coords.append(new_given_num)
-    current_index = 2 + init_digits_num  # the index that loop stopped at
+    current_index = 2 + init_digits_num  # the index that loop stopped at - indicate where we are in the 'lines' list
     signs_num = int(lines[current_index])
     if signs_num > 0:
         for i in range(current_index + 1, current_index + 1 + signs_num):
@@ -46,12 +45,19 @@ def openInputFile():
                                         (int(lines[i][4]) - 1, int(lines[i][6]) - 1))
             signs_coords.append(new_given_signs_location)
 
+def get_random_sol(size):
+    nums = list(range(1,(size[0]+1)))
+    sol = [np.random.permutation(nums) for i in range(size[0])]
+    return np.asarray(sol)
+
 
 # create 100 random solutions
 def initial_random_sols():
     sols_array = []
     for i in range(pop_size):
-        new_sol = np.random.randint(1, matrix_size[0] + 1, size=matrix_size)
+        # new_sol = np.random.randint(1, matrix_size[0] + 1, size=matrix_size)
+        # TODO check if better
+        new_sol = get_random_sol(matrix_size)
         for i in range(len(init_digits_coords)):
             # add the initial values from the input file
             new_sol[init_digits_coords[i][0][0]][init_digits_coords[i][0][1]] = init_digits_coords[i][1]
@@ -59,23 +65,55 @@ def initial_random_sols():
     return sols_array
 
 
+class Fitness_byPlace:
+    def __init__(self,scores):
+        self.calls = 0
+        self.scores = scores
+        the_range = range(1, len(scores)+1)
+        self.posabilities = [x/sum(the_range) for x in the_range] 
+        # will save indexes of scores in decreasing order - the best solution will be the last
+        self.orderd_indexes = np.argsort(self.scores*-1)
+    
+    def get_fit(self):
+        self.calls += 1
+        # TODO maybe use by scoers instead 
+        self.orderd_indexes = np.argsort(self.scores*-1)
+
+    def get_newSol_idx(self):
+        return np.random.choice(self.orderd_indexes, p = self.posabilities)
+
+
 class GenericAlgo:
     def __init__(self, sols):
         self.sols = sols
-        self.scores = [-1] * len(self.sols)
-        self.greatest_sol_idx = -10
+        self.scores = np.array([-1] * len(self.sols))
+        self.best_sol_idx = -10
+        self.best_val = 10000
+        self.prevBest_val = 10000
+        self.fitness_f = Fitness_byPlace(self.scores)
+        # TODO in Darvin
+        # self.optimize_sols = sols.copy()
+        # self.fitness_f = Fitness_byPlace(self.optimize_sols)
+    
+    @classmethod
+    def optimize(sols):
+        pass
+
 
     # make crossover from two parents solutions
     def crossover(self, sol1, sol2):
-        crossover_sol = []
+        crossover_sol1 = []
+        crossover_sol2 = []
         # get random rows number.
         random_row = np.random.randint(0, matrix_size[0] - 1)
         # take this numbers of rows from first solution matrix
-        [crossover_sol.append(sol1[i]) for i in range(0, random_row)]
+        [crossover_sol1.append(sol1[i]) for i in range(0, random_row)]
+        [crossover_sol2.append(sol2[i]) for i in range(0, random_row)]
         # take the rest numbers of rows from the second solution matrix
-        [crossover_sol.append(sol2[i]) for i in range(random_row, matrix_size[0])]
-        crossover_sol = np.array(crossover_sol)
-        return crossover_sol
+        [crossover_sol1.append(sol2[i]) for i in range(random_row, matrix_size[0])]
+        [crossover_sol2.append(sol1[i]) for i in range(random_row, matrix_size[0])]
+        crossover_sol1 = np.array(crossover_sol1)
+        return crossover_sol1, crossover_sol2
 
     # create one mutation in random indexes -> replace the current value to another in the relevant range
     def create_mutation(self, sol):
@@ -132,23 +170,26 @@ class GenericAlgo:
                 signs_score += 1
         return signs_score
 
-    def next_generation(self):
-        self.evaluation()
-        # minimum score is the greatest solution
-        self.greatest_sol_idx = self.scores.index(min(self.scores))
+        
+    def create_next_sols(self):
+        # minimum score is the best solution - add it to the sollutions
+        self.prevBest_val = self.best_val
+        self.best_sol_idx = np.argmin(self.scores)
+        self.best_val = self.scores[self.best_sol_idx]
         new_sols = []
-        new_sols.append(self.sols[self.greatest_sol_idx])
+        new_sols.append(self.sols[self.best_sol_idx].copy())
         done = False
         while not done:
-            # TODO improve the randomly choose - create some priority for the better score (the lower in our case)
-            index = np.random.randint(0, pop_size - 1)
-            sol = self.sols[index]
-            crossover_chance = 15
+            # get create new solution fou to fittnes
+            index = self.fitness_f.get_newSol_idx()
+            sol = self.sols[index].copy()
             if random.randrange(0, 100) < crossover_chance:
-                cross_index = np.random.randint(0, pop_size - 1)
-                sol_cross = self.sols[cross_index]
-                sol = self.crossover(sol, sol_cross)
-            mutation_chance = 15
+                # choose one of the chosen sols te crossover
+                if len(new_sols) < 0:
+                    cross_index = np.random.randint(0, len(new_sols))
+                    sol_cross = new_sols[cross_index]
+                    sol, sol_cross  = self.crossover(sol, sol_cross)
+            # TODO only one mutation? maybe more
             if random.randrange(0, 100) < mutation_chance:
                 self.create_mutation(sol)
             new_sols.append(sol)
@@ -156,20 +197,28 @@ class GenericAlgo:
                 done = True
         self.sols = new_sols
 
+
+    def next_generation(self):
+        self.evaluation()
+        self.fitness_f.get_fit()
+        self.create_next_sols()
+
+
     def solve_convergence(self):
         pass
 
     def run_algo(self):
-        for i in range(15000):
-            print(self.scores[self.greatest_sol_idx])
+        for i in range(150000):
+            if self.best_val != self.prevBest_val:
+                print(self.best_val)
+            if (i % 10000) == 0:
+                print("gen: {} score:{}".format(i,self.best_val))
             self.next_generation()
-            if self.scores[self.greatest_sol_idx] == 0:
-                print(self.sols[self.greatest_sol_idx])
+            if self.best_val == 0:
+                print(self.best_val)
                 break
 
-    # necessary ?
-    def fitness(self):
-        pass
+
 
 
 if __name__ == '__main__':
