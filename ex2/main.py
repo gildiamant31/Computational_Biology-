@@ -18,7 +18,7 @@ init_digits_coords = []  # list of tuples of coordinates and a value of it, look
 signs_coords = []  # list of tuples of coordinates tuple pairs represent the sign location, look like this -> ((1,2),(1,5))
 # hyper parameters
 crossover_chance = 5
-mutation_chance = 5
+mutation_chance = 10
 max_num_mutation = 10
 
 
@@ -151,6 +151,10 @@ class GenericAlgo:
                 negative_score += self.checkUnique(sol[:, col])
             negative_score += self.checkSignsPlaces(sol)
             self.scores[index] = negative_score
+                # minimum score is the best solution - add it to the sollutions
+        self.prevBest_val = self.best_val
+        self.best_sol_idx = np.argmin(self.scores)
+        self.best_val = self.scores[self.best_sol_idx]
 
     # check if there are duplicates in every row or column - if there is it return one otherwise it return 0
     def checkUnique(self, row_or_col):
@@ -173,10 +177,6 @@ class GenericAlgo:
 
         
     def create_next_sols(self):
-        # minimum score is the best solution - add it to the sollutions
-        self.prevBest_val = self.best_val
-        self.best_sol_idx = np.argmin(self.scores)
-        self.best_val = self.scores[self.best_sol_idx]
         new_sols = []
         done = False
         while not done:
@@ -194,9 +194,10 @@ class GenericAlgo:
                 if random.randrange(0, 100) < mutation_chance:
                     self.create_mutation(sol)
             new_sols.append(sol)
-            if (len(new_sols) + 1)  == len(self.sols):
+            if (len(new_sols) + 5)  == len(self.sols):
                 done = True
-        new_sols.append(self.sols[self.best_sol_idx].copy())
+        for t in range(5):
+            new_sols.append(self.sols[self.best_sol_idx].copy())
         self.sols = new_sols
 
 
@@ -226,18 +227,27 @@ class GenericAlgo:
 
 class DarvinAlgo(GenericAlgo):
     def __init__(self, sols):
-        self.sols = sols
-        self.scores = np.array([-1] * len(self.sols))
-        self.best_sol_idx = -10
-        self.best_val = 10000
-        self.prevBest_val = 10000
-        self.fitness_f = Fitness_byPlace(self.scores)
-        # TODO in Darvin
-        # self.optimize_sols = sols.copy()
-        # self.fitness_f = Fitness_byPlace(self.optimize_sols)
+        super(DarvinAlgo,self).__init__(sols)
+
 
     def next_generation(self):
+        self.evaluation()
+        self.fitness_f.get_fit()
+        self.create_next_sols()
+        self.optimize()
+        self.evaluation()
 
+class LemarkAlgo(GenericAlgo):
+    def __init__(self, sols):
+        super(LemarkAlgo,self).__init__(sols)
+
+
+    def next_generation(self):
+        self.optimize()
+        self.evaluation()
+        self.fitness_f.get_fit()
+        self.create_next_sols()
+        
 
 
 if __name__ == '__main__':
