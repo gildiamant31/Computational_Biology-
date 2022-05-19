@@ -17,8 +17,9 @@ pop_size = 100 # size of population
 init_digits_coords = []  # list of tuples of coordinates and a value of it, look like this -> ((1,2),4)
 signs_coords = []  # list of tuples of coordinates tuple pairs represent the sign location, look like this -> ((1,2),(1,5))
 # hyper parameters
-crossover_chance = 25
-mutation_chance = 80
+crossover_chance = 5
+mutation_chance = 5
+max_num_mutation = 10
 
 
 
@@ -189,8 +190,9 @@ class GenericAlgo:
                     sol_cross = new_sols[cross_index]
                     sol, sol_cross  = self.crossover(sol, sol_cross)
             # TODO only one mutation? maybe more
-            if random.randrange(0, 100) < mutation_chance:
-                self.create_mutation(sol)
+            for m in range(max_num_mutation):
+                if random.randrange(0, 100) < mutation_chance:
+                    self.create_mutation(sol)
             new_sols.append(sol)
             if (len(new_sols) + 1)  == len(self.sols):
                 done = True
@@ -211,17 +213,30 @@ class GenericAlgo:
         for i in range(150000):
             if self.best_val != self.prevBest_val:
                 print(self.best_val)
-            if (i % 5000) == 0  and i != 0:
+            if (i % 1000) == 0  and i != 0:
                 print("gen: {} score:{}".format(i,self.best_val))
                 global mutation_chance
-                mutation_chance -= 10
+                mutation_chance += 10
                 global crossover_chance
-                crossover_chance -= 3
+                # crossover_chance -= 3
             self.next_generation()
             if self.best_val == 0:
                 print(self.best_val)
                 break
 
+class DarvinAlgo(GenericAlgo):
+    def __init__(self, sols):
+        self.sols = sols
+        self.scores = np.array([-1] * len(self.sols))
+        self.best_sol_idx = -10
+        self.best_val = 10000
+        self.prevBest_val = 10000
+        self.fitness_f = Fitness_byPlace(self.scores)
+        # TODO in Darvin
+        # self.optimize_sols = sols.copy()
+        # self.fitness_f = Fitness_byPlace(self.optimize_sols)
+
+    def next_generation(self):
 
 
 
