@@ -4,29 +4,27 @@ Itamar Twersky
 """
 # import matplotlib.pyplot as plt
 # import pygame
-#from tkinter import *
-#from tkinter import messagebox
+# from tkinter import *
+# from tkinter import messagebox
 from os import stat
 import random
 import numpy as np
 import sys
 
 # global variables to be determind from file
-matrix_size = [] 
-pop_size = 100 # size of population
+matrix_size = []
+pop_size = 100  # size of population
 init_digits_coords = []  # list of tuples of coordinates and a value of it, look like this -> ((1,2),4)
 signs_coords = []  # list of tuples of coordinates tuple pairs represent the sign location, look like this -> ((1,2),(1,5))
 # hyper parameters
-crossover_chance = 5
+crossover_chance = 35
 mutation_chance = 10
-max_num_mutation = 10
-
-
+max_num_mutation =3
 
 # get input from input files with details on the matrix and saved it on global variables
 def openInputFile():
     # TODO edit path
-    with open("ex2/input/input1.txt") as f:
+    with open("input/input1.txt") as f:
         lines = f.readlines()
     lines = [lines[i].strip() for i in range(len(lines))]
     matrix_size.append(int(lines[0]))
@@ -46,8 +44,9 @@ def openInputFile():
                                         (int(lines[i][4]) - 1, int(lines[i][6]) - 1))
             signs_coords.append(new_given_signs_location)
 
+
 def get_random_sol(size):
-    nums = list(range(1,(size[0]+1)))
+    nums = list(range(1, (size[0] + 1)))
     sol = [np.random.permutation(nums) for i in range(size[0])]
     return np.asarray(sol)
 
@@ -67,21 +66,21 @@ def initial_random_sols():
 
 
 class Fitness_byPlace:
-    def __init__(self,scores):
+    def __init__(self, scores):
         self.calls = 0
         self.scores = scores
-        the_range = range(1, len(scores)+1)
-        self.posabilities = [x/sum(the_range) for x in the_range] 
+        the_range = range(1, len(scores) + 1)
+        self.posabilities = [x / sum(the_range) for x in the_range]
         # will save indexes of scores in decreasing order - the best solution will be the last
-        self.orderd_indexes = np.argsort(self.scores*-1)
-    
+        self.orderd_indexes = np.argsort(self.scores * -1)
+
     def get_fit(self):
         self.calls += 1
         # TODO maybe use by scoers instead 
-        self.orderd_indexes = np.argsort(self.scores*-1)
+        self.orderd_indexes = np.argsort(self.scores * -1)
 
     def get_newSol_idx(self):
-        return np.random.choice(self.orderd_indexes, p = self.posabilities)
+        return np.random.choice(self.orderd_indexes, p=self.posabilities)
 
 
 class GenericAlgo:
@@ -95,11 +94,34 @@ class GenericAlgo:
         # TODO in Darvin
         # self.optimize_sols = sols.copy()
         # self.fitness_f = Fitness_byPlace(self.optimize_sols)
-    
-    @classmethod
-    def optimize(sols):
-        pass
 
+    # @classmethod
+    def optimize(self):
+        counter = 0
+        numbers_opts = [i for i in range(1, matrix_size[0] + 1)]
+        done = False
+        for sol in self.sols:
+            # check if first number is greater than the other which appear after the "bigger than" sign
+            for i in range(len(signs_coords)):
+                # first number before the sign - should be the bigger
+                first_num = sol[signs_coords[i][0][0]][signs_coords[i][0][1]]
+                # second number after the sign - should be the smaller
+                second_num = sol[signs_coords[i][1][0]][signs_coords[i][1][1]]
+                # if we have a mistake we replace between them
+                if first_num <= second_num:
+                    sol[signs_coords[i][0][0]][signs_coords[i][0][1]] = second_num
+                    sol[signs_coords[i][1][0]][signs_coords[i][1][1]] = first_num
+                    counter += 1
+                if counter == matrix_size[0]:
+                    done = True
+                    break
+            if done:
+                continue
+            # TODO remove duplicates from each line & row
+            # for row in sol:
+            #     if self.checkUnique(row) == 1:
+            #         unused_num = list(set(numbers_opts) - set(row))
+            #         unused_num = unused_num[0]
 
     # make crossover from two parents solutions
     def crossover(self, sol1, sol2):
@@ -151,7 +173,7 @@ class GenericAlgo:
                 negative_score += self.checkUnique(sol[:, col])
             negative_score += self.checkSignsPlaces(sol)
             self.scores[index] = negative_score
-                # minimum score is the best solution - add it to the sollutions
+            # minimum score is the best solution - add it to the sollutions
         self.prevBest_val = self.best_val
         self.best_sol_idx = np.argmin(self.scores)
         self.best_val = self.scores[self.best_sol_idx]
@@ -175,7 +197,6 @@ class GenericAlgo:
                 signs_score += 1
         return signs_score
 
-        
     def create_next_sols(self):
         new_sols = []
         done = False
@@ -186,49 +207,59 @@ class GenericAlgo:
             if random.randrange(0, 100) < crossover_chance:
                 # choose one of the chosen sols te crossover
                 if len(new_sols) > 1:
-                    cross_index = np.random.randint(0, len(new_sols)-1)
+                    cross_index = np.random.randint(0, len(new_sols) - 1)
                     sol_cross = new_sols[cross_index]
-                    sol, sol_cross  = self.crossover(sol, sol_cross)
+                    sol, sol_cross = self.crossover(sol, sol_cross)
             # TODO only one mutation? maybe more
             for m in range(max_num_mutation):
                 if random.randrange(0, 100) < mutation_chance:
                     self.create_mutation(sol)
             new_sols.append(sol)
-            if (len(new_sols) + 5)  == len(self.sols):
+            if (len(new_sols) + 5) == len(self.sols):
                 done = True
         for t in range(5):
             new_sols.append(self.sols[self.best_sol_idx].copy())
         self.sols = new_sols
 
-
     def next_generation(self):
         self.evaluation()
         self.fitness_f.get_fit()
         self.create_next_sols()
-
 
     def solve_convergence(self):
         pass
 
     def run_algo(self):
+        global mutation_chance
+        global crossover_chance
+        gen_counter = 0
+        count = False
         for i in range(150000):
             if self.best_val != self.prevBest_val:
                 print(self.best_val)
-            if (i % 1000) == 0  and i != 0:
-                print("gen: {} score:{}".format(i,self.best_val))
-                global mutation_chance
-                mutation_chance += 10
-                global crossover_chance
-                # crossover_chance -= 3
+            if (i % 40) == 0 and i != 0:
+                count = True
+                print("gen: {} score:{}".format(i, self.best_val))
+                print(self.sols[self.best_sol_idx])
+            #     mutation_chance = 80
+            #     crossover_chance = 80
+            # if count:
+            #     gen_counter += 1
+            # if gen_counter == 10:
+            #     print("gen: {} score:{}".format(i, self.best_val))
+            #     mutation_chance = 35
+            #     crossover_chance = 10
+            #     count = False
+            #     gen_counter = 0
             self.next_generation()
             if self.best_val == 0:
                 print(self.best_val)
                 break
 
+
 class DarvinAlgo(GenericAlgo):
     def __init__(self, sols):
-        super(DarvinAlgo,self).__init__(sols)
-
+        super(DarvinAlgo, self).__init__(sols)
 
     def next_generation(self):
         self.evaluation()
@@ -236,22 +267,22 @@ class DarvinAlgo(GenericAlgo):
         self.create_next_sols()
         self.optimize()
         self.evaluation()
+
 
 class LemarkAlgo(GenericAlgo):
     def __init__(self, sols):
-        super(LemarkAlgo,self).__init__(sols)
-
+        super(LemarkAlgo, self).__init__(sols)
 
     def next_generation(self):
         self.optimize()
         self.evaluation()
         self.fitness_f.get_fit()
         self.create_next_sols()
-        
 
 
 if __name__ == '__main__':
     openInputFile()
     random_sols = initial_random_sols()
-    algo = GenericAlgo(random_sols)
+    algo = LemarkAlgo(random_sols)
     algo.run_algo()
+    # TODO לשים לבנת חבלה במעבדה של אונגר
