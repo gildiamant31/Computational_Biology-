@@ -18,14 +18,15 @@ init_digits_coords = []  # list of tuples of coordinates and a value of it, look
 signs_coords = []  # list of tuples of coordinates tuple pairs represent the sign location, look like this -> ((1,2),(1,5))
 # hyper parameters
 crossover_chance = 35
-mutation_chance = 60
-max_num_mutation =15
+mutation_chance = 25
+max_num_mutation = 7
 d_flag = False
+
 
 # get input from input files with details on the matrix and saved it on global variables
 def openInputFile():
     # TODO edit path
-    with open("ex2/input/input1.txt") as f:
+    with open("input/input1.txt") as f:
         lines = f.readlines()
     lines = [lines[i].strip() for i in range(len(lines))]
     matrix_size.append(int(lines[0]))
@@ -99,11 +100,13 @@ class GenericAlgo:
         # self.fitness_f = Fitness_byPlace(self.optimize_sols)
 
     # @classmethod
-    def optimize(self):
+    def optimize(self, sols=None):
         counter = 0
         numbers_opts = [i for i in range(1, matrix_size[0] + 1)]
         done = False
-        for sol in self.sols:
+        if sols is None:
+            sols = self.sols
+        for sol in sols:
             # check if first number is greater than the other which appear after the "bigger than" sign
             for i in range(len(signs_coords)):
                 # first number before the sign - should be the bigger
@@ -120,11 +123,18 @@ class GenericAlgo:
                     break
             if done:
                 continue
-            # TODO remove duplicates from each line & row
-            # for row in sol:
-            #     if self.checkUnique(row) == 1:
-            #         unused_num = list(set(numbers_opts) - set(row))
-            #         unused_num = unused_num[0]
+            # add more optimization - replace every rows with duplicates in new row without duplicates
+            for row in sol:
+                if self.checkUnique(row) == 1:
+                    nums = list(range(1, (matrix_size[0] + 1)))
+                    new_row = [np.random.permutation(nums) for i in range(matrix_size[0])]
+                    row = np.asarray(new_row)
+                    counter +=1
+                if counter == matrix_size[0]:
+                    done = True
+                    break
+            if done:
+                continue
 
     # make crossover from two parents solutions
     def crossover(self, sol1, sol2):
@@ -163,8 +173,11 @@ class GenericAlgo:
             new_num = np.random.randint(1, matrix_size[0])
         sol[indexes[0]][indexes[1]] = new_num
 
-    def evaluation(self):
-        for index, sol in enumerate(self.sols):
+    def evaluation(self, sols=None, scores=None):
+        if sols is None and scores is None:
+            sols = self.sols
+            scores = self.scores
+        for index, sol in enumerate(sols):
             # our score will be negative, we will add score for every mismatch.
             # if everything it's good the biggest score will be 0
             negative_score = 0
@@ -175,50 +188,32 @@ class GenericAlgo:
             for col in range(matrix_size[0]):
                 negative_score += self.checkUnique(sol[:, col])
             negative_score += self.checkSignsPlaces(sol)
-            self.scores[index] = negative_score
+            scores[index] = negative_score
             # minimum score is the best solution - add it to the sollutions
         self.prevBest_val = self.best_val
-        self.best_sol_idx = np.argmin(self.scores)
-        self.best_val = self.scores[self.best_sol_idx]
+        self.best_sol_idx = np.argmin(scores)
+        self.best_val = scores[self.best_sol_idx]
+        return self.best_val, self.best_sol_idx
 
-    def evaluation(self):
-        for index, sol in enumerate(self.sols):
-            # our score will be negative, we will add score for every mismatch.
-            # if everything it's good the biggest score will be 0
-            negative_score = 0
-            # check if there are duplicate in every row
-            for row in sol:
-                negative_score += self.checkUnique(row)
-            # check if there are duplicate in every column
-            for col in range(matrix_size[0]):
-                negative_score += self.checkUnique(sol[:, col])
-            negative_score += self.checkSignsPlaces(sol)
-            self.scores[index] = negative_score
-            # minimum score is the best solution - add it to the sollutions
-        self.prevBest_val = self.best_val
-        self.best_sol_idx = np.argmin(self.scores)
-        self.best_val = self.scores[self.best_sol_idx]
-    
     def evaluation_print(self, sol):
-            negative_score = 0
-            # check if there are duplicate in every row
-            for row in sol:
-                negative_score += self.checkUnique(row)
-                if negative_score != 0 :
-                    print("in row :", row)
-                    exit(0)
-            # check if there are duplicate in every column
-            for col in range(matrix_size[0]):
-                negative_score += self.checkUnique(sol[:, col])
-                if negative_score != 0 :
-                    print("in col :", sol[:, col])
-                    exit(0)
-            negative_score += self.checkSignsPlaces(sol)
-            if negative_score != 0 :
-                    print("in signs :")
-                    print(signs_coords)
-                    exit(0)
-            
+        negative_score = 0
+        # check if there are duplicate in every row
+        for row in sol:
+            negative_score += self.checkUnique(row)
+            if negative_score != 0:
+                print("in row :", row)
+                exit(0)
+        # check if there are duplicate in every column
+        for col in range(matrix_size[0]):
+            negative_score += self.checkUnique(sol[:, col])
+            if negative_score != 0:
+                print("in col :", sol[:, col])
+                exit(0)
+        negative_score += self.checkSignsPlaces(sol)
+        if negative_score != 0:
+            print("in signs :")
+            print(signs_coords)
+            exit(0)
 
     # check if there are duplicates in every row or column - if there is it return one otherwise it return 0
     def checkUnique(self, row_or_col):
@@ -262,13 +257,11 @@ class GenericAlgo:
         self.sols = new_sols
 
     def next_generation(self):
-        self.evaluation()
+        best_val, best_idx = self.evaluation()
         self.fitness_f.get_fit()
         self.create_next_sols()
-        self.evaluation()
-
-    def solve_convergence(self):
-        pass
+        best_val, best_idx = self.evaluation()
+        return best_val, self.sols[best_idx].copy()
 
     def run_algo(self):
         global mutation_chance
@@ -279,37 +272,38 @@ class GenericAlgo:
         mutCh_V = 30
         gen_counter = 0
         count = False
-        d_flag=False
+        d_flag = False
         from_last_ch = 0
+        best_val = self.best_val
+        best_idx = self.best_sol_idx
+        best = self.sols[best_idx].copy()
         print("hypers: crossover_chance: {}, maxMut_V: {}, mutCh_V: {}".format(crossover_chance, maxMut_V, mutCh_V))
         print("mut_chance: {}, max_n_mut{}".format(mutation_chance, max_num_mutation))
         for i in range(10000):
-            if self.best_val != self.prevBest_val:
-                print("gen: {} score:{}".format(i, self.best_val))
+            if best_val != self.prevBest_val:
+                print("gen: {} score:{}".format(i, best_val))
                 from_last_ch = 0
                 mutation_chance = 10
-                max_num_mutation =3
+                max_num_mutation = 3
             if (i % 50) == 0 and i != 0:
                 count = True
-                print("gen: {} score:{}".format(i, self.best_val))
+                print("gen: {} score:{}".format(i, best_val))
             if from_last_ch == 150:
                 random_sols = initial_random_sols()
-                best = self.sols[self.best_sol_idx].copy()
-
                 self.sols = random_sols
                 self.sols[0] = best
                 from_last_ch = 0
-                print("restart gen: {} score:{}".format(i, self.best_val))
-                d_flag=True
+                print("restart gen: {} score:{}".format(i, best_val))
+                d_flag = True
 
                 # max_num_mutation = maxMut_V
                 # mutation_chance = mutCh_V
                 # print("super mut gen: {} score:{}".format(i, self.best_val))
             # if from_last_ch == 151:
-                # max_num_mutation = 3
-                # mutation_chance = 10
-                # from_last_ch = 0
-                #print(self.sols[self.best_sol_idx])
+            # max_num_mutation = 3
+            # mutation_chance = 10
+            # from_last_ch = 0
+            # print(self.sols[self.best_sol_idx])
             #     mutation_chance = 80
             #     crossover_chance = 80
             # if count:
@@ -320,7 +314,7 @@ class GenericAlgo:
             #     crossover_chance = 10
             #     count = False
             #     gen_counter = 0
-            self.next_generation()
+            best_val, best = self.next_generation()
             from_last_ch += 1
             if self.best_val == 0:
                 print(self.sols[self.best_sol_idx])
@@ -328,6 +322,7 @@ class GenericAlgo:
             if self.best_val == 1:
                 print(self.sols[self.best_sol_idx])
                 self.evaluation_print(self.sols[self.best_sol_idx])
+
     def print_best_sol(self):
         graphic_mat = []
         best_sol = self.sols[self.best_sol_idx]
@@ -343,14 +338,18 @@ class DarvinAlgo(GenericAlgo):
         super(DarvinAlgo, self).__init__(sols)
 
     def next_generation(self):
-        self.evaluation()
+        real_best_score, real_best_idx = self.evaluation()
         self.fitness_f.get_fit()
         opt_sols = self.sols.copy()
+        opt_scores = self.scores.copy()
         self.optimize(opt_sols)
-        best_score, best_index = self.darvin_evaluation(opt_sols, opt_scores)
+        best_score, best_index = self.evaluation(opt_sols, opt_scores)
         self.create_next_sols()
-        return best_score
-        #self.evaluation()
+        real_best_score, real_best_idx = self.evaluation()
+        sol = self.sols[real_best_idx].copy()
+        if best_score == 0:
+            sol = opt_sols[best_index].copy()
+        return best_score, sol
 
 
 class LemarkAlgo(GenericAlgo):
@@ -359,15 +358,16 @@ class LemarkAlgo(GenericAlgo):
 
     def next_generation(self):
         self.optimize()
-        self.evaluation()
+        best_val, best_idx = self.evaluation()
         self.fitness_f.get_fit()
         self.create_next_sols()
-        self.evaluation()
+        best_val, best_idx = self.evaluation()
+        return best_val, self.sols[best_idx].copy()
 
 
 if __name__ == '__main__':
     openInputFile()
     random_sols = initial_random_sols()
-    algo = GenericAlgo(random_sols)
+    algo = LemarkAlgo(random_sols)
     algo.run_algo()
     # TODO לשים לבנת חבלה במעבדה של אונגר
