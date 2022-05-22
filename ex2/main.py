@@ -129,7 +129,7 @@ class GenericAlgo:
                     nums = list(range(1, (matrix_size[0] + 1)))
                     new_row = [np.random.permutation(nums) for i in range(matrix_size[0])]
                     row = np.asarray(new_row)
-                    counter +=1
+                    counter += 1
                 if counter == matrix_size[0]:
                     done = True
                     break
@@ -289,6 +289,7 @@ class GenericAlgo:
                 count = True
                 print("gen: {} score:{}".format(i, best_val))
             if from_last_ch == 150:
+                self.print_best_sol()
                 random_sols = initial_random_sols()
                 self.sols = random_sols
                 self.sols[0] = best
@@ -326,11 +327,60 @@ class GenericAlgo:
     def print_best_sol(self):
         graphic_mat = []
         best_sol = self.sols[self.best_sol_idx]
-        for i in best_sol:
+        for row in best_sol:
+            tmp_list = []
             for num in row:
-                graphic_mat.append(num)
-                graphic_mat.append(None)
-            graphic_mat
+                tmp_list.append(num)
+                tmp_list.append(None)
+            tmp_list=np.asarray(tmp_list)
+            graphic_mat.append(tmp_list)
+            graphic_mat.append([" " for i in range(matrix_size[0])])
+        for sign in signs_coords:
+            r1 = sign[0][0]
+            c1 = sign[0][1]
+            r2 = sign[1][0]
+            c2 = sign[1][1]
+            # if is the same line
+            if r1 == r2:
+                r_idx = r1
+                # the first number is always bigger
+                if r1 % 2 != 0:
+                    r_idx = r1 + 1
+                # if the bigger is in left
+                if c1 > c2:
+                    c_idx = c1
+                    if c1 % 2 == 0:
+                        c_idx = c1 - 1
+                    new_sign = '<'
+                    graphic_mat[r_idx][c_idx] = new_sign
+                # if the bigger is in right
+                elif c2 > c1:
+                    c_idx = c2
+                    if c2 % 2 == 0:
+                        c_idx = c2 - 1
+                    new_sign = '>'
+                    graphic_mat[r_idx][c_idx] = new_sign
+            # if is the same column
+            elif c1 == c2:
+                c_idx = c1
+                if c1 % 2 != 0:
+                    c_idx = c1 + 1
+                #  if the bigger is down
+                if r1 > r2:
+                    r_idx = r1
+                    if r1 % 2 == 0:
+                        r_idx = r1 - 1
+                    new_sign = '^'
+                    graphic_mat[r_idx][c_idx] = new_sign
+                # the bigger is up
+                elif r1 < r2:
+                    r_idx = r2
+                    if r2 % 2 == 0:
+                        r_idx = r2 - 1
+                    new_sign = 'v'
+                    graphic_mat[r_idx][c_idx] = new_sign
+        for row in graphic_mat:
+            print(*[" " + str(row[i])+ " " for i in range(len(row))])
 
 
 class DarvinAlgo(GenericAlgo):
