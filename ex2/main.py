@@ -18,8 +18,8 @@ init_digits_coords = []  # list of tuples of coordinates and a value of it, look
 signs_coords = []  # list of tuples of coordinates tuple pairs represent the sign location, look like this -> ((1,2),(1,5))
 # hyper parameters
 crossover_chance = 35
-mutation_chance = 25
-max_num_mutation = 7
+mutation_chance = 15
+max_num_mutation = 6
 d_flag = False
 
 
@@ -101,12 +101,12 @@ class GenericAlgo:
 
     # @classmethod
     def optimize(self, sols=None):
-        counter = 0
-        numbers_opts = [i for i in range(1, matrix_size[0] + 1)]
         done = False
         if sols is None:
             sols = self.sols
         for sol in sols:
+            # it count the optimization steps for every solutions
+            counter = 0
             # check if first number is greater than the other which appear after the "bigger than" sign
             for i in range(len(signs_coords)):
                 # first number before the sign - should be the bigger
@@ -125,6 +125,7 @@ class GenericAlgo:
                 continue
             # add more optimization - replace every rows with duplicates in new row without duplicates
             for row in sol:
+                # if return value is 1 it means that we have duplicates on this row
                 if self.checkUnique(row) == 1:
                     nums = list(range(1, (matrix_size[0] + 1)))
                     new_row = [np.random.permutation(nums) for i in range(matrix_size[0])]
@@ -189,7 +190,7 @@ class GenericAlgo:
                 negative_score += self.checkUnique(sol[:, col])
             negative_score += self.checkSignsPlaces(sol)
             scores[index] = negative_score
-            # minimum score is the best solution - add it to the sollutions
+            # minimum score is the best solution - add it to the solutions
         self.prevBest_val = self.best_val
         self.best_sol_idx = np.argmin(scores)
         self.best_val = scores[self.best_sol_idx]
@@ -233,6 +234,7 @@ class GenericAlgo:
                 signs_score += 1
         return signs_score
 
+    # create new solutions for the next generation
     def create_next_sols(self):
         new_sols = []
         done = False
@@ -240,14 +242,16 @@ class GenericAlgo:
             # get create new solution fou to fittnes
             index = self.fitness_f.get_newSol_idx()
             sol = self.sols[index].copy()
+            # we will do crossover only if we will get number which is in our crossover possibility
             if random.randrange(0, 100) < crossover_chance:
                 # choose one of the chosen sols te crossover
                 if len(new_sols) > 1:
                     cross_index = np.random.randint(0, len(new_sols) - 1)
                     sol_cross = new_sols[cross_index]
                     sol, sol_cross = self.crossover(sol, sol_cross)
-            # TODO only one mutation? maybe more
+            # create more than one mutation randomly
             for m in range(max_num_mutation):
+                # we will do mutation only if we will get number which is in our mutation possibility
                 if random.randrange(0, 100) < mutation_chance:
                     self.create_mutation(sol)
             new_sols.append(sol)
@@ -256,6 +260,7 @@ class GenericAlgo:
         new_sols.append(self.sols[self.best_sol_idx].copy())
         self.sols = new_sols
 
+    # this method use other object's methods to create a new generation
     def next_generation(self):
         best_val, best_idx = self.evaluation()
         self.fitness_f.get_fit()
@@ -263,7 +268,9 @@ class GenericAlgo:
         best_val, best_idx = self.evaluation()
         return best_val, self.sols[best_idx].copy()
 
+    # run this algorithm
     def run_algo(self):
+        # use the global variables
         global mutation_chance
         global crossover_chance
         global max_num_mutation
@@ -289,7 +296,6 @@ class GenericAlgo:
                 count = True
                 print("gen: {} score:{}".format(i, best_val))
             if from_last_ch == 150:
-                self.print_best_sol()
                 random_sols = initial_random_sols()
                 self.sols = random_sols
                 self.sols[0] = best
@@ -297,33 +303,17 @@ class GenericAlgo:
                 print("restart gen: {} score:{}".format(i, best_val))
                 d_flag = True
 
-                # max_num_mutation = maxMut_V
-                # mutation_chance = mutCh_V
-                # print("super mut gen: {} score:{}".format(i, self.best_val))
-            # if from_last_ch == 151:
-            # max_num_mutation = 3
-            # mutation_chance = 10
-            # from_last_ch = 0
-            # print(self.sols[self.best_sol_idx])
-            #     mutation_chance = 80
-            #     crossover_chance = 80
-            # if count:
-            #     gen_counter += 1
-            # if gen_counter == 10:
-            #     print("gen: {} score:{}".format(i, self.best_val))
-            #     mutation_chance = 35
-            #     crossover_chance = 10
-            #     count = False
-            #     gen_counter = 0
             best_val, best = self.next_generation()
             from_last_ch += 1
             if self.best_val == 0:
-                print(self.sols[self.best_sol_idx])
+                self.print_best_sol()
                 break
             if self.best_val == 1:
-                print(self.sols[self.best_sol_idx])
+                self.print_best_sol()
                 self.evaluation_print(self.sols[self.best_sol_idx])
+        self.print_best_sol()
 
+    # this function print the board of the best solution with all the signs on it
     def print_best_sol(self):
         graphic_mat = []
         best_sol = self.sols[self.best_sol_idx]
@@ -332,9 +322,11 @@ class GenericAlgo:
             for num in row:
                 tmp_list.append(num)
                 tmp_list.append(" ")
-            tmp_list=np.asarray(tmp_list)
+            tmp_list = np.asarray(tmp_list)
             graphic_mat.append(tmp_list)
-            graphic_mat.append(np.asarray([" " for i in range(2*matrix_size[0])]))
+            graphic_mat.append(np.asarray([" " for i in range(2 * matrix_size[0])]))
+
+        # run over all the signs locations
         for sign in signs_coords:
             r1 = sign[0][0]
             c1 = sign[0][1]
@@ -342,41 +334,43 @@ class GenericAlgo:
             c2 = sign[1][1]
             # if is the same line
             if r1 == r2:
-                r_idx = 2*r1
+                r_idx = 2 * r1
                 # the first number is always bigger
                 # if the bigger is in left
                 if c1 > c2:
-                    c_idx = (c1*2)-1
+                    c_idx = (c1 * 2) - 1
                     new_sign = '<'
                     graphic_mat[r_idx][c_idx] = new_sign
                 # if the bigger is in right
                 elif c2 > c1:
-                    c_idx = (c2*2)-1
+                    c_idx = (c2 * 2) - 1
                     if c2 % 2 == 0:
                         c_idx = c2 - 1
                     new_sign = '>'
                     graphic_mat[r_idx][c_idx] = new_sign
             # if is the same column
             elif c1 == c2:
-                c_idx = c1*2
+                c_idx = c1 * 2
                 #  if the bigger is down
                 if r1 > r2:
-                    r_idx = (r1*2)-1
+                    r_idx = (r1 * 2) - 1
                     new_sign = '^'
                     graphic_mat[r_idx][c_idx] = new_sign
                 # the bigger is up
                 elif r1 < r2:
-                    r_idx = (r2*2)-1
+                    r_idx = (r2 * 2) - 1
                     new_sign = 'v'
                     graphic_mat[r_idx][c_idx] = new_sign
+        # print the board
         for row in graphic_mat:
-            print(*[" " + str(row[i])+ " " for i in range(len(row))])
+            print(*[" " + str(row[i]) + " " for i in range(len(row))])
 
 
-class DarvinAlgo(GenericAlgo):
+class DarWinAlgo(GenericAlgo):
     def __init__(self, sols):
-        super(DarvinAlgo, self).__init__(sols)
+        super(DarWinAlgo, self).__init__(sols)
 
+    # we update this method to support Darwin algorithm option
     def next_generation(self):
         real_best_score, real_best_idx = self.evaluation()
         self.fitness_f.get_fit()
@@ -396,6 +390,7 @@ class LemarkAlgo(GenericAlgo):
     def __init__(self, sols):
         super(LemarkAlgo, self).__init__(sols)
 
+    # we update this method to support Lemark algorithm option
     def next_generation(self):
         self.optimize()
         best_val, best_idx = self.evaluation()
@@ -408,6 +403,6 @@ class LemarkAlgo(GenericAlgo):
 if __name__ == '__main__':
     openInputFile()
     random_sols = initial_random_sols()
-    algo = LemarkAlgo(random_sols)
+    algo = GenericAlgo(random_sols)
     algo.run_algo()
     # TODO לשים לבנת חבלה במעבדה של אונגר
