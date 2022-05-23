@@ -11,6 +11,7 @@ import random
 import re
 import numpy as np
 import sys
+
 # import matplotlib.pyplot as plt
 
 
@@ -104,7 +105,6 @@ class GenericAlgo:
         self.best_of_all_val = 100
         self.best_of_all_sol = None
 
-
     # @classmethod
     def optimize(self, sols=None):
         done = False
@@ -187,7 +187,10 @@ class GenericAlgo:
         sol[row][col2] = current_num1
 
     def evaluation(self, sols=None, scores=None):
+        # check if we use it on Darwin algo
+        isDarwin = True
         if sols is None and scores is None:
+            isDarwin = False
             sols = self.sols
             scores = self.scores
         for index, sol in enumerate(sols):
@@ -205,6 +208,9 @@ class GenericAlgo:
             # minimum score is the best solution - add it to the solutions
         self.prevBest_val = self.best_val
         self.best_sol_idx = np.argmin(scores)
+        if isDarwin:
+            best_val = scores[self.best_sol_idx]
+            return best_val, self.best_sol_idx
         self.best_val = scores[self.best_sol_idx]
         return self.best_val, self.best_sol_idx
 
@@ -224,7 +230,6 @@ class GenericAlgo:
         if negative_score != 0:
             print("in signs :")
             print(signs_coords)
-  
 
     # check if there are duplicates in every row or column - if there is it return one otherwise it return 0
     def checkUnique(self, row_or_col):
@@ -277,13 +282,12 @@ class GenericAlgo:
         self.fitness_f.get_fit()
         return best_val, self.sols[best_idx].copy()
 
-    
     def restart(self):
         self.evaluation()
         random_sols = initial_random_sols()
         # will save indexes of scores in increasing order - the best solution will be the first
         orderd_indexes = np.argsort(self.scores)
-        num_to_take = int(len(self.sols)*percent_to_keep)
+        num_to_take = int(len(self.sols) * percent_to_keep)
         all_the_best = [self.sols[orderd_indexes[i]] for i in range(num_to_take)]
         # best_idx = self.best_sol_idx
         # best = self.sols[best_idx].copy()
@@ -294,9 +298,8 @@ class GenericAlgo:
         self.evaluation()
         self.fitness_f.get_fit()
 
-    
     # run this algorithm
-    def run_algo(self,gens_to_run):
+    def run_algo(self, gens_to_run):
         avg_list = []
         best_list = []
         gen_list = []
@@ -308,13 +311,14 @@ class GenericAlgo:
         best_val = self.best_val
         best_idx = self.best_sol_idx
         best = self.sols[best_idx].copy()
-        print("hypers: crossover_chance: {},mut_chance: {}, max_n_mut: {}".format(crossover_chance, mutation_chance, max_num_mutation))
+        print("hypers: crossover_chance: {},mut_chance: {}, max_n_mut: {}".format(crossover_chance, mutation_chance,
+                                                                                  max_num_mutation))
         for i in range(gens_to_run):
             if best_val != self.prevBest_val:
                 print("gen: {} score:{}".format(i, best_val))
                 if self.best_of_all_val > best_val:
                     self.best_of_all_val = best_val
-                    self.best_of_all_sol = self.sols[best_idx].copy()
+                    self.best_of_all_sol = best.copy()
                 avg_score = sum(self.scores) / len(self.scores)
                 gen_list.append(i)
                 avg_list.append(avg_score)
@@ -322,7 +326,7 @@ class GenericAlgo:
                 from_last_ch = 0
             if (i % 100) == 0 and i != 0:
                 print("gen: {} best mistakes number:{}".format(i, best_val))
-                avg_score = sum(self.scores) / len(self.scores) 
+                avg_score = sum(self.scores) / len(self.scores)
                 print("Average mistakes number:", avg_score, "\n")
                 gen_list.append(i)
                 avg_list.append(avg_score)
@@ -336,13 +340,15 @@ class GenericAlgo:
             from_last_ch += 1
             # if we have solution
             if self.best_val == 0:
+                self.best_of_all_val = best_val
+                self.best_of_all_sol = best.copy()
                 break
 
         # plt.plot(gen_list, avg_list, label = "avg score vs generation")
         # plt.plot(gen_list, best_list, label = "best score vs generation")
         # plt.legend()
         # plt.show()
-        print("finished" + str(i) + "rounds, best score: ", self.best_of_all_val)
+        print("finished", str(i), "rounds, best score: ", self.best_of_all_val)
         print("best solution: ")
         self.print_best_sol(self.best_of_all_sol)
 
@@ -397,7 +403,6 @@ class GenericAlgo:
         # print the board
         for row in graphic_mat:
             print(*[" " + str(row[i]) + " " for i in range(len(row))])
-        
 
 
 class DarWinAlgo(GenericAlgo):
@@ -417,7 +422,8 @@ class DarWinAlgo(GenericAlgo):
         sol = self.sols[real_best_idx].copy()
         if best_score == 0:
             sol = opt_sols[best_index].copy()
-        return best_score, sol
+            real_best_score = best_score
+        return real_best_score, sol
 
 
 class LemarkAlgo(GenericAlgo):
@@ -440,7 +446,7 @@ def get_file_path():
     window.eval('tk::PlaceWindow . center')
     frame = tk.Frame(window)
     frame.pack()
-    label1 = tk.Label(frame, text="New file name: ", padx=20, pady=10)
+    label1 = tk.Label(frame, text="Please insert the path of your file: ", padx=20, pady=10)
     d = tk.Entry(frame, width=30, borderwidth=5)
     d.insert(tk.END, default)
     exit = tk.Button(frame, text="change new file", padx=20, pady=10, command=window.quit)
@@ -500,12 +506,13 @@ def choose_algorithm(sols):
     root.mainloop()
     return algo
 
+
 if __name__ == '__main__':
     openInputFile(get_file_path())
     random_sols = initial_random_sols()
     while True:
         algo = choose_algorithm(random_sols)
-        algo.run_algo(10000)
+        algo.run_algo(1000)
         ask_for_retry = messagebox.askyesno("Genetic Algorithms", "Algo Simulation is over\n"
                                                                   "Do you want to start the simulation again?")
         if not ask_for_retry:
