@@ -306,17 +306,17 @@ class GenericAlgo:
             best_val, best = self.next_generation()
             from_last_ch += 1
             if self.best_val == 0:
-                self.print_best_sol()
+                self.print_best_sol(best)
                 break
             if self.best_val == 1:
-                self.print_best_sol()
+                self.print_best_sol(best)
                 self.evaluation_print(self.sols[self.best_sol_idx])
-        self.print_best_sol()
+        self.print_best_sol(self.sols[self.best_sol_idx])
 
     # this function print the board of the best solution with all the signs on it
-    def print_best_sol(self):
+    def print_best_sol(self, sol):
         graphic_mat = []
-        best_sol = self.sols[self.best_sol_idx]
+        best_sol = sol
         for row in best_sol:
             tmp_list = []
             for num in row:
@@ -364,6 +364,8 @@ class GenericAlgo:
         # print the board
         for row in graphic_mat:
             print(*[" " + str(row[i]) + " " for i in range(len(row))])
+        avg_score = sum(self.scores) / len(self.scores)
+        print("Average mistakes number:", avg_score, "\n")
 
 
 class DarWinAlgo(GenericAlgo):
