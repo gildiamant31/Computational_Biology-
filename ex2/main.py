@@ -323,7 +323,7 @@ class GenericAlgo:
                 print("gen: {} best mistakes number:{}".format(i, best_val))
                 avg_score = sum(self.scores) / len(self.scores) 
                 print("Average mistakes number:", avg_score, "\n")
-                gen_list.append[i]
+                gen_list.append(i)
                 avg_list.append(avg_score)
                 best_list.append(best_val)
             if from_last_ch == 100:
