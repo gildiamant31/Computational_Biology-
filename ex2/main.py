@@ -331,10 +331,10 @@ class GenericAlgo:
             tmp_list = []
             for num in row:
                 tmp_list.append(num)
-                tmp_list.append(None)
+                tmp_list.append(" ")
             tmp_list=np.asarray(tmp_list)
             graphic_mat.append(tmp_list)
-            graphic_mat.append([" " for i in range(matrix_size[0])])
+            graphic_mat.append(np.asarray([" " for i in range(2*matrix_size[0])]))
         for sign in signs_coords:
             r1 = sign[0][0]
             c1 = sign[0][1]
@@ -342,41 +342,31 @@ class GenericAlgo:
             c2 = sign[1][1]
             # if is the same line
             if r1 == r2:
-                r_idx = r1
+                r_idx = 2*r1
                 # the first number is always bigger
-                if r1 % 2 != 0:
-                    r_idx = r1 + 1
                 # if the bigger is in left
                 if c1 > c2:
-                    c_idx = c1
-                    if c1 % 2 == 0:
-                        c_idx = c1 - 1
+                    c_idx = (c1*2)-1
                     new_sign = '<'
                     graphic_mat[r_idx][c_idx] = new_sign
                 # if the bigger is in right
                 elif c2 > c1:
-                    c_idx = c2
+                    c_idx = (c2*2)-1
                     if c2 % 2 == 0:
                         c_idx = c2 - 1
                     new_sign = '>'
                     graphic_mat[r_idx][c_idx] = new_sign
             # if is the same column
             elif c1 == c2:
-                c_idx = c1
-                if c1 % 2 != 0:
-                    c_idx = c1 + 1
+                c_idx = c1*2
                 #  if the bigger is down
                 if r1 > r2:
-                    r_idx = r1
-                    if r1 % 2 == 0:
-                        r_idx = r1 - 1
+                    r_idx = (r1*2)-1
                     new_sign = '^'
                     graphic_mat[r_idx][c_idx] = new_sign
                 # the bigger is up
                 elif r1 < r2:
-                    r_idx = r2
-                    if r2 % 2 == 0:
-                        r_idx = r2 - 1
+                    r_idx = (r2*2)-1
                     new_sign = 'v'
                     graphic_mat[r_idx][c_idx] = new_sign
         for row in graphic_mat:
