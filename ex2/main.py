@@ -315,7 +315,7 @@ class GenericAlgo:
                     self.best_of_all_val = best_val
                     self.best_of_all_sol = self.sols[best_idx].copy()
                 avg_score = sum(self.scores) / len(self.scores)
-                gen_list.append[i]
+                gen_list.append(i)
                 avg_list.append(avg_score)
                 best_list.append(best_val) 
                 from_last_ch = 0
