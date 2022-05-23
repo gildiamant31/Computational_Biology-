@@ -5,8 +5,8 @@ Itamar Twersky
 # import matplotlib.pyplot as plt
 # import pygame
 # from tkinter import *
-# from tkinter import messagebox
-from os import stat
+from tkinter import messagebox
+import tkinter as tk
 import random
 import re
 import numpy as np
@@ -26,12 +26,13 @@ mutation_chance = 10
 max_num_mutation = 10
 # will determine how much of the previous solution to keep after restart
 percent_to_keep = 0
+algo = "algo"
 
 
 # get input from input files with details on the matrix and saved it on global variables
-def openInputFile():
+def openInputFile(file_path):
     # TODO edit path
-    with open("input/input1.txt") as f:
+    with open(file_path) as f:
         lines = f.readlines()
     lines = [lines[i].strip() for i in range(len(lines))]
     matrix_size.append(int(lines[0]))
@@ -317,7 +318,7 @@ class GenericAlgo:
                 avg_score = sum(self.scores) / len(self.scores)
                 gen_list.append(i)
                 avg_list.append(avg_score)
-                best_list.append(best_val) 
+                best_list.append(best_val)
                 from_last_ch = 0
             if (i % 100) == 0 and i != 0:
                 print("gen: {} best mistakes number:{}".format(i, best_val))
@@ -336,7 +337,7 @@ class GenericAlgo:
             # if we have solution
             if self.best_val == 0:
                 break
-        
+
         # plt.plot(gen_list, avg_list, label = "avg score vs generation")
         # plt.plot(gen_list, best_list, label = "best score vs generation")
         # plt.legend()
@@ -432,28 +433,81 @@ class LemarkAlgo(GenericAlgo):
         return best_val, self.sols[best_idx].copy()
 
 
-def choose_algorithem(sols):
-    return GenericAlgo(sols)
-    # menu = {}
-    # menu['1']="generic algorithem" 
-    # menu['2']="lemark algorithem"
-    # menu['3']="lemark algorithem"
-    # menu['4']="Exit"
-    # while True: 
-    #     options=menu.keys()
-    #     options.sort()
-    #     for entry in options: 
-    #         print (entry, menu[entry])
+def get_file_path():
+    default = "input/5_easy.txt"
+    window = tk.Tk()
+    window.title("Genetic Algorithms")
+    window.eval('tk::PlaceWindow . center')
+    frame = tk.Frame(window)
+    frame.pack()
+    label1 = tk.Label(frame, text="New file name: ", padx=20, pady=10)
+    d = tk.Entry(frame, width=30, borderwidth=5)
+    d.insert(tk.END, default)
+    exit = tk.Button(frame, text="change new file", padx=20, pady=10, command=window.quit)
+    label1.grid(row=0, column=0)
+    d.grid(row=0, column=1)
+    exit.grid(row=5, column=0, columnspan=2)
+    window.mainloop()
+    new_path = d.get()
+    window.destroy()
+    window.quit()
+    return new_path
 
-    #     selection=input("Please choose number to select your algorithem")
-    #     if selection in menu.keys():
 
-    #     else: 
-    #     print "Unknown Option Selected!" 
+def choose_algorithm(sols):
+    root = tk.Tk()
+    root.title("Genetic Algorithms")
+    root.geometry("300x300")
+    root.eval('tk::PlaceWindow . center')
+    frame = tk.Frame(root)
+    frame.pack()
+
+    def ChooseGeneric():
+        global algo
+        algo = GenericAlgo(sols)
+        root.destroy()
+
+    def ChooseLemark():
+        global algo
+        algo = LemarkAlgo(sols)
+        root.destroy()
+
+    def ChooseDarwin():
+        global algo
+        algo = DarWinAlgo(sols)
+        root.destroy()
+
+    label = tk.Label(frame, text="Please choose your genetic algorithm: ", bd=12, fg="black", )
+    label.pack()
+    button = tk.Button(frame,
+                       text="Simple Genetic Algorithm",
+                       fg="red",
+                       bd=8,
+                       command=ChooseGeneric)
+    button.pack(pady=10)
+    slogan = tk.Button(frame,
+                       text="Lemark Genetic Algorithm",
+                       fg="blue",
+                       bd=8,
+                       command=ChooseLemark)
+    slogan.pack(pady=10)
+    darwin = tk.Button(frame,
+                       text="Darwin Genetic Algorithm",
+                       fg="green",
+                       bd=8,
+                       command=ChooseDarwin)
+    darwin.pack(pady=10)
+    root.mainloop()
+    return algo
 
 if __name__ == '__main__':
-    openInputFile()
+    openInputFile(get_file_path())
     random_sols = initial_random_sols()
-    algo = choose_algorithem(random_sols)
-    algo.run_algo(10000)
+    while True:
+        algo = choose_algorithm(random_sols)
+        algo.run_algo(10000)
+        ask_for_retry = messagebox.askyesno("Genetic Algorithms", "Algo Simulation is over\n"
+                                                                  "Do you want to start the simulation again?")
+        if not ask_for_retry:
+            break
     # TODO לשים לבנת חבלה במעבדה של אונגר
