@@ -8,8 +8,11 @@ Itamar Twersky
 # from tkinter import messagebox
 from os import stat
 import random
+import re
 import numpy as np
 import sys
+# import matplotlib.pyplot as plt
+
 
 # global variables to be determind from file
 matrix_size = []
@@ -20,15 +23,15 @@ signs_coords = []  # list of tuples of coordinates tuple pairs represent the sig
 # role as name of variables
 crossover_chance = 35
 mutation_chance = 10
-max_num_mutation = 15
+max_num_mutation = 10
 # will determine how much of the previous solution to keep after restart
-percent_to_keep = 0.2
+percent_to_keep = 0
 
 
 # get input from input files with details on the matrix and saved it on global variables
 def openInputFile():
     # TODO edit path
-    with open("ex2/input/input1.txt") as f:
+    with open("input/input1.txt") as f:
         lines = f.readlines()
     lines = [lines[i].strip() for i in range(len(lines))]
     matrix_size.append(int(lines[0]))
@@ -97,9 +100,9 @@ class GenericAlgo:
         self.fitness_f = Fitness_byPlace(self.scores)
         self.evaluation()
         self.fitness_f.get_fit()
-        # TODO in Darvin
-        # self.optimize_sols = sols.copy()
-        # self.fitness_f = Fitness_byPlace(self.optimize_sols)
+        self.best_of_all_val = 100
+        self.best_of_all_sol = None
+
 
     # @classmethod
     def optimize(self, sols=None):
@@ -157,24 +160,30 @@ class GenericAlgo:
     # create one mutation in random indexes -> replace the current value to another in the relevant range
     def create_mutation(self, sol):
         # get random indexes
-        indexes = np.random.randint(0, matrix_size[0] - 1, 2)
-        current_num = sol[indexes[0]][indexes[1]]
+        row = np.random.randint(0, matrix_size[0] - 1)
+        col1 = np.random.randint(0, matrix_size[0] - 1)
+        col2 = np.random.randint(0, matrix_size[0] - 1)
+        indexes1 = (row, col1)
+        indexes2 = (row, col2)
         stop = False
         # we don't want to create mutation on the permanent input values
         # we will do this loop until we get random value which not appear in the input values
         while not stop:
             for i in range(len(init_digits_coords)):
-                if tuple(indexes) in init_digits_coords[i]:
+                if indexes1 in init_digits_coords[i] or indexes2 in init_digits_coords[i]:
                     stop = False
-                    indexes = np.random.randint(0, matrix_size[0] - 1, 2)
+                    row = np.random.randint(0, matrix_size[0] - 1)
+                    col1 = np.random.randint(0, matrix_size[0] - 1)
+                    col2 = np.random.randint(0, matrix_size[0] - 1)
+                    indexes1 = (row, col1)
+                    indexes2 = (row, col2)
                     break
                 stop = True
-        # get new number value for replacing the old value
-        new_num = np.random.randint(1, matrix_size[0])
-        # stop this loop when the numbers are different
-        while current_num == new_num:
-            new_num = np.random.randint(1, matrix_size[0])
-        sol[indexes[0]][indexes[1]] = new_num
+        # get the numbers
+        current_num1 = sol[row][col1]
+        current_num2 = sol[row][col2]
+        sol[row][col1] = current_num2
+        sol[row][col2] = current_num1
 
     def evaluation(self, sols=None, scores=None):
         if sols is None and scores is None:
@@ -269,10 +278,11 @@ class GenericAlgo:
 
     
     def restart(self):
+        self.evaluation()
         random_sols = initial_random_sols()
         # will save indexes of scores in increasing order - the best solution will be the first
         orderd_indexes = np.argsort(self.scores)
-        num_to_take = int(matrix_size[0]*percent_to_keep)
+        num_to_take = int(len(self.sols)*percent_to_keep)
         all_the_best = [self.sols[orderd_indexes[i]] for i in range(num_to_take)]
         # best_idx = self.best_sol_idx
         # best = self.sols[best_idx].copy()
@@ -285,43 +295,55 @@ class GenericAlgo:
 
     
     # run this algorithm
-    def run_algo(self):
+    def run_algo(self,gens_to_run):
+        avg_list = []
+        best_list = []
+        gen_list = []
         # use the global variables
         global mutation_chance
         global crossover_chance
         global max_num_mutation
-        maxMut_V = 30
-        mutCh_V = 30
         from_last_ch = 0
         best_val = self.best_val
         best_idx = self.best_sol_idx
         best = self.sols[best_idx].copy()
-        print("hypers: crossover_chance: {}, maxMut_V: {}, mutCh_V: {}".format(crossover_chance, maxMut_V, mutCh_V))
-        print("mut_chance: {}, max_n_mut{}".format(mutation_chance, max_num_mutation))
-        for i in range(10000):
+        print("hypers: crossover_chance: {},mut_chance: {}, max_n_mut: {}".format(crossover_chance, mutation_chance, max_num_mutation))
+        for i in range(gens_to_run):
             if best_val != self.prevBest_val:
                 print("gen: {} score:{}".format(i, best_val))
+                if self.best_of_all_val > best_val:
+                    self.best_of_all_val = best_val
+                    self.best_of_all_sol = self.sols[best_idx].copy()
+                avg_score = sum(self.scores) / len(self.scores)
+                gen_list.append[i]
+                avg_list.append(avg_score)
+                best_list.append(best_val) 
                 from_last_ch = 0
-                mutation_chance = 10
-                max_num_mutation = 3
-            if (i % 50) == 0 and i != 0:
+            if (i % 100) == 0 and i != 0:
                 print("gen: {} best mistakes number:{}".format(i, best_val))
                 avg_score = sum(self.scores) / len(self.scores) 
                 print("Average mistakes number:", avg_score, "\n")
-            if from_last_ch == 150:
+                gen_list.append[i]
+                avg_list.append(avg_score)
+                best_list.append(best_val)
+            if from_last_ch == 100:
                 self.restart()
                 print("restart gen: {} score:{}".format(i, best_val))
                 from_last_ch = 0
 
             best_val, best = self.next_generation()
             from_last_ch += 1
+            # if we have solution
             if self.best_val == 0:
-                self.print_best_sol(best)
                 break
-            if self.best_val == 1:
-                self.print_best_sol(best)
-                self.evaluation_print(self.sols[self.best_sol_idx])
-        self.print_best_sol(self.sols[self.best_sol_idx])
+        
+        # plt.plot(gen_list, avg_list, label = "avg score vs generation")
+        # plt.plot(gen_list, best_list, label = "best score vs generation")
+        # plt.legend()
+        # plt.show()
+        print("finished" + str(i) + "rounds, best score: ", self.best_of_all_val)
+        print("best solution: ")
+        self.print_best_sol(self.best_of_all_sol)
 
     # this function print the board of the best solution with all the signs on it
     def print_best_sol(self, sol):
@@ -411,26 +433,27 @@ class LemarkAlgo(GenericAlgo):
 
 
 def choose_algorithem(sols):
-    menu = {}
-    menu['1']="generic algorithem" 
-    menu['2']="lemark algorithem"
-    menu['3']="lemark algorithem"
-    menu['4']="Exit"
-    while True: 
-        options=menu.keys()
-        options.sort()
-        for entry in options: 
-            print (entry, menu[entry])
+    return GenericAlgo(sols)
+    # menu = {}
+    # menu['1']="generic algorithem" 
+    # menu['2']="lemark algorithem"
+    # menu['3']="lemark algorithem"
+    # menu['4']="Exit"
+    # while True: 
+    #     options=menu.keys()
+    #     options.sort()
+    #     for entry in options: 
+    #         print (entry, menu[entry])
 
-        selection=input("Please choose number to select your algorithem")
-        if selection in menu.keys():
-            
-        else: 
-        print "Unknown Option Selected!" 
+    #     selection=input("Please choose number to select your algorithem")
+    #     if selection in menu.keys():
+
+    #     else: 
+    #     print "Unknown Option Selected!" 
 
 if __name__ == '__main__':
     openInputFile()
     random_sols = initial_random_sols()
     algo = choose_algorithem(random_sols)
-    algo.run_algo()
+    algo.run_algo(10000)
     # TODO לשים לבנת חבלה במעבדה של אונגר
