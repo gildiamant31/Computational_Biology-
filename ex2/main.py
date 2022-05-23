@@ -17,16 +17,18 @@ pop_size = 100  # size of population
 init_digits_coords = []  # list of tuples of coordinates and a value of it, look like this -> ((1,2),4)
 signs_coords = []  # list of tuples of coordinates tuple pairs represent the sign location, look like this -> ((1,2),(1,5))
 # hyper parameters
+# role as name of variables
 crossover_chance = 35
-mutation_chance = 15
-max_num_mutation = 6
-d_flag = False
+mutation_chance = 10
+max_num_mutation = 15
+# will determine how much of the previous solution to keep after restart
+percent_to_keep = 0.2
 
 
 # get input from input files with details on the matrix and saved it on global variables
 def openInputFile():
     # TODO edit path
-    with open("input/input1.txt") as f:
+    with open("ex2/input/input1.txt") as f:
         lines = f.readlines()
     lines = [lines[i].strip() for i in range(len(lines))]
     matrix_size.append(int(lines[0]))
@@ -78,7 +80,7 @@ class Fitness_byPlace:
 
     def get_fit(self):
         self.calls += 1
-        # TODO maybe use by scoers instead 
+        # will save indexes of scores in decreasing order - the best solution will be the last
         self.orderd_indexes = np.argsort(self.scores * -1)
 
     def get_newSol_idx(self):
@@ -203,18 +205,16 @@ class GenericAlgo:
             negative_score += self.checkUnique(row)
             if negative_score != 0:
                 print("in row :", row)
-                exit(0)
         # check if there are duplicate in every column
         for col in range(matrix_size[0]):
             negative_score += self.checkUnique(sol[:, col])
             if negative_score != 0:
                 print("in col :", sol[:, col])
-                exit(0)
         negative_score += self.checkSignsPlaces(sol)
         if negative_score != 0:
             print("in signs :")
             print(signs_coords)
-            exit(0)
+  
 
     # check if there are duplicates in every row or column - if there is it return one otherwise it return 0
     def checkUnique(self, row_or_col):
@@ -262,24 +262,36 @@ class GenericAlgo:
 
     # this method use other object's methods to create a new generation
     def next_generation(self):
-        best_val, best_idx = self.evaluation()
-        self.fitness_f.get_fit()
         self.create_next_sols()
         best_val, best_idx = self.evaluation()
+        self.fitness_f.get_fit()
         return best_val, self.sols[best_idx].copy()
 
+    
+    def restart(self):
+        random_sols = initial_random_sols()
+        # will save indexes of scores in increasing order - the best solution will be the first
+        orderd_indexes = np.argsort(self.scores)
+        num_to_take = int(matrix_size[0]*percent_to_keep)
+        all_the_best = [self.sols[orderd_indexes[i]] for i in range(num_to_take)]
+        # best_idx = self.best_sol_idx
+        # best = self.sols[best_idx].copy()
+        self.sols = random_sols
+        for i in range(len(all_the_best)):
+            self.sols[i] = all_the_best[i]
+        # self.sols[0] = best
+        self.evaluation()
+        self.fitness_f.get_fit()
+
+    
     # run this algorithm
     def run_algo(self):
         # use the global variables
         global mutation_chance
         global crossover_chance
         global max_num_mutation
-        global d_flag
         maxMut_V = 30
         mutCh_V = 30
-        gen_counter = 0
-        count = False
-        d_flag = False
         from_last_ch = 0
         best_val = self.best_val
         best_idx = self.best_sol_idx
@@ -293,15 +305,13 @@ class GenericAlgo:
                 mutation_chance = 10
                 max_num_mutation = 3
             if (i % 50) == 0 and i != 0:
-                count = True
-                print("gen: {} score:{}".format(i, best_val))
+                print("gen: {} best mistakes number:{}".format(i, best_val))
+                avg_score = sum(self.scores) / len(self.scores) 
+                print("Average mistakes number:", avg_score, "\n")
             if from_last_ch == 150:
-                random_sols = initial_random_sols()
-                self.sols = random_sols
-                self.sols[0] = best
-                from_last_ch = 0
+                self.restart()
                 print("restart gen: {} score:{}".format(i, best_val))
-                d_flag = True
+                from_last_ch = 0
 
             best_val, best = self.next_generation()
             from_last_ch += 1
@@ -344,8 +354,8 @@ class GenericAlgo:
                 # if the bigger is in right
                 elif c2 > c1:
                     c_idx = (c2 * 2) - 1
-                    if c2 % 2 == 0:
-                        c_idx = c2 - 1
+                    # if c2 % 2 == 0:
+                    #    c_idx = c2 - 1
                     new_sign = '>'
                     graphic_mat[r_idx][c_idx] = new_sign
             # if is the same column
@@ -364,8 +374,7 @@ class GenericAlgo:
         # print the board
         for row in graphic_mat:
             print(*[" " + str(row[i]) + " " for i in range(len(row))])
-        avg_score = sum(self.scores) / len(self.scores)
-        print("Average mistakes number:", avg_score, "\n")
+        
 
 
 class DarWinAlgo(GenericAlgo):
@@ -394,17 +403,34 @@ class LemarkAlgo(GenericAlgo):
 
     # we update this method to support Lemark algorithm option
     def next_generation(self):
+        self.create_next_sols()
         self.optimize()
         best_val, best_idx = self.evaluation()
         self.fitness_f.get_fit()
-        self.create_next_sols()
-        best_val, best_idx = self.evaluation()
         return best_val, self.sols[best_idx].copy()
 
+
+def choose_algorithem(sols):
+    menu = {}
+    menu['1']="generic algorithem" 
+    menu['2']="lemark algorithem"
+    menu['3']="lemark algorithem"
+    menu['4']="Exit"
+    while True: 
+        options=menu.keys()
+        options.sort()
+        for entry in options: 
+            print (entry, menu[entry])
+
+        selection=input("Please choose number to select your algorithem")
+        if selection in menu.keys():
+            
+        else: 
+        print "Unknown Option Selected!" 
 
 if __name__ == '__main__':
     openInputFile()
     random_sols = initial_random_sols()
-    algo = GenericAlgo(random_sols)
+    algo = choose_algorithem(random_sols)
     algo.run_algo()
     # TODO לשים לבנת חבלה במעבדה של אונגר
