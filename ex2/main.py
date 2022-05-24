@@ -2,7 +2,6 @@
 Gil Diamant
 Itamar Twersky
 """
-# import pygame
 import tkinter as tk
 import random
 import numpy as np
@@ -47,6 +46,7 @@ def openInputFile(file_path):
             signs_coords.append(new_given_signs_location)
 
 
+# create a random solution which contain permutation of the matrix size range in every line of it.
 def get_random_sol(size):
     nums = list(range(1, (size[0] + 1)))
     sol = [np.random.permutation(nums) for i in range(size[0])]
@@ -66,6 +66,7 @@ def initial_random_sols():
     return sols_array
 
 
+# class which help the algorithm to chose the best solutions for the next generation
 class Fitness_byPlace:
     def __init__(self, scores):
         self.calls = 0
@@ -97,7 +98,7 @@ class GenericAlgo:
         self.best_of_all_val = 100
         self.best_of_all_sol = None
 
-    # @classmethod
+    # optimization for every solution in specific generation of this algorithm
     def optimize(self, sols=None):
         done = False
         if sols is None:
@@ -200,28 +201,12 @@ class GenericAlgo:
             # minimum score is the best solution - add it to the solutions
         self.prevBest_val = self.best_val
         self.best_sol_idx = np.argmin(scores)
+        # if it is used by Darwin algo we don't want to use our real scores array
         if isDarwin:
             best_val = scores[self.best_sol_idx]
             return best_val, self.best_sol_idx
         self.best_val = scores[self.best_sol_idx]
         return self.best_val, self.best_sol_idx
-
-    def evaluation_print(self, sol):
-        negative_score = 0
-        # check if there are duplicate in every row
-        for row in sol:
-            negative_score += self.checkUnique(row)
-            if negative_score != 0:
-                print("in row :", row)
-        # check if there are duplicate in every column
-        for col in range(matrix_size[0]):
-            negative_score += self.checkUnique(sol[:, col])
-            if negative_score != 0:
-                print("in col :", sol[:, col])
-        negative_score += self.checkSignsPlaces(sol)
-        if negative_score != 0:
-            print("in signs :")
-            print(signs_coords)
 
     # check if there are duplicates in every row or column - if there is it return one otherwise it return 0
     def checkUnique(self, row_or_col):
@@ -274,6 +259,7 @@ class GenericAlgo:
         self.fitness_f.get_fit()
         return best_val, self.sols[best_idx].copy()
 
+    # restart algorithm's solutions if we want to do it while algo is running
     def restart(self):
         self.evaluation()
         random_sols = initial_random_sols()
@@ -306,8 +292,10 @@ class GenericAlgo:
         print("hypers: crossover_chance: {},mut_chance: {}, max_n_mut: {}".format(crossover_chance, mutation_chance,
                                                                                   max_num_mutation))
         for i in range(gens_to_run):
+            # if the best score changed
             if best_val != self.prevBest_val:
                 print("gen: {} score:{}".format(i, best_val))
+                # if we have better solution instead of our best solution from all generations until now
                 if self.best_of_all_val > best_val:
                     self.best_of_all_val = best_val
                     self.best_of_all_sol = best.copy()
@@ -335,12 +323,13 @@ class GenericAlgo:
             # because achive best solution in it is very unlikely
             best_val, best = self.next_generation()
             from_last_ch += 1
-     
-        plt.plot(gen_list, avg_list, label = "avg score vs generation")
-        plt.plot(gen_list, best_list, label = "best score vs generation")
+
+        # code for plot
+        plt.plot(gen_list, avg_list, label="avg score vs generation")
+        plt.plot(gen_list, best_list, label="best score vs generation")
         my_t = str(type(self).__name__)
         my_t += ("\n" + file_name)
-        plt.text(6, 14, my_t, fontsize = 12, bbox = dict(facecolor = 'red', alpha = 0.5))
+        plt.text(6, 14, my_t, fontsize=12, bbox=dict(facecolor='red', alpha=0.5))
         plt.legend()
         plt.title("score for generation \n gentics agorithem solving futoshiki problem")
         plt.xlabel("generation")
@@ -422,6 +411,7 @@ class DarwinAlgo(GenericAlgo):
         self.create_next_sols()
         real_best_score, real_best_idx = self.evaluation()
         sol = self.sols[real_best_idx].copy()
+        # we used the optimized solution only if we got solution which solve the board completely
         if best_score == 0:
             sol = opt_sols[best_index].copy()
             real_best_score = best_score
@@ -441,9 +431,11 @@ class LemarkAlgo(GenericAlgo):
         return best_val, self.sols[best_idx].copy()
 
 
+# open window to insert the path to input file.txt with tkinter package
 def get_file_path():
     done = False
-    while(not done):
+    while (not done):
+        # default path
         default = "input/5_easy.txt"
         window = tk.Tk()
         window.title("Genetic Algorithms")
@@ -462,6 +454,7 @@ def get_file_path():
         window.destroy()
         window.quit()
         done = True
+        # if the path isn't correct
         if not os.path.exists(new_path):
             print("file dosent exist")
             done = False
@@ -469,9 +462,11 @@ def get_file_path():
     file_name = os.path.basename(new_path)
     return new_path
 
+
+# this function open window for user to pick the number of generations which the algorithm should run
 def get_num_rounds():
     done = False
-    while(not done):
+    while (not done):
         default = "1000"
         window = tk.Tk()
         window.title("Genetic Algorithms")
@@ -496,6 +491,7 @@ def get_num_rounds():
     return int(num_rounds)
 
 
+# this function open window for user to pick one algorithm using tkinter package
 def choose_algorithm(sols):
     root = tk.Tk()
     root.title("Genetic Algorithms")
@@ -504,16 +500,19 @@ def choose_algorithm(sols):
     frame = tk.Frame(root)
     frame.pack()
 
+    # inner function to initial the algo as simple genetic algorithm
     def ChooseGeneric():
         global algo
         algo = GenericAlgo(sols)
         root.destroy()
 
+    # inner function to initial the algo as Lemark genetic algorithm
     def ChooseLemark():
         global algo
         algo = LemarkAlgo(sols)
         root.destroy()
 
+    # inner function to initial the algo as Darwin genetic algorithm
     def ChooseDarwin():
         global algo
         algo = DarwinAlgo(sols)
@@ -548,5 +547,3 @@ if __name__ == '__main__':
     random_sols = initial_random_sols()
     algo = choose_algorithm(random_sols)
     algo.run_algo(get_num_rounds())
-
-
