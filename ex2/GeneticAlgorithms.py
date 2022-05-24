@@ -4,7 +4,6 @@ Itamar Twersky
 """
 import tkinter as tk
 import random
-from tkinter import messagebox
 from time import sleep
 
 import numpy as np
@@ -551,5 +550,4 @@ if __name__ == '__main__':
     random_sols = initial_random_sols()
     algo = choose_algorithm(random_sols)
     algo.run_algo(get_num_rounds())
-    messagebox.showinfo("Genetic Algorithms", "Algorithm's running was finished\n       have a nice day!!")
-    sleep(40)
+    sleep(60)
