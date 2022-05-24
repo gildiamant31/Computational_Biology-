@@ -2,18 +2,12 @@
 Gil Diamant
 Itamar Twersky
 """
-# import matplotlib.pyplot as plt
 # import pygame
-# from tkinter import *
-from tkinter import messagebox
 import tkinter as tk
 import random
-import re
 import numpy as np
-import sys
-
-# import matplotlib.pyplot as plt
-
+import matplotlib.pyplot as plt
+import os
 
 # global variables to be determind from file
 matrix_size = []
@@ -23,16 +17,15 @@ signs_coords = []  # list of tuples of coordinates tuple pairs represent the sig
 # hyper parameters
 # role as name of variables
 crossover_chance = 35
-mutation_chance = 10
-max_num_mutation = 10
+mutation_chance = 15
+max_num_mutation = 15
 # will determine how much of the previous solution to keep after restart
 percent_to_keep = 0
-algo = "algo"
+file_name = ""
 
 
 # get input from input files with details on the matrix and saved it on global variables
 def openInputFile(file_path):
-    # TODO edit path
     with open(file_path) as f:
         lines = f.readlines()
     lines = [lines[i].strip() for i in range(len(lines))]
@@ -65,7 +58,6 @@ def initial_random_sols():
     sols_array = []
     for i in range(pop_size):
         # new_sol = np.random.randint(1, matrix_size[0] + 1, size=matrix_size)
-        # TODO check if better
         new_sol = get_random_sol(matrix_size)
         for i in range(len(init_digits_coords)):
             # add the initial values from the input file
@@ -324,6 +316,9 @@ class GenericAlgo:
                 avg_list.append(avg_score)
                 best_list.append(best_val)
                 from_last_ch = 0
+            # if we have a solution
+            if best_val == 0:
+                break
             if (i % 100) == 0 and i != 0:
                 print("gen: {} best mistakes number:{}".format(i, best_val))
                 avg_score = sum(self.scores) / len(self.scores)
@@ -333,23 +328,30 @@ class GenericAlgo:
                 best_list.append(best_val)
             if from_last_ch == 100:
                 self.restart()
-                print("restart gen: {} score:{}".format(i, best_val))
+                print("restart gen: {}".format(i))
                 from_last_ch = 0
-
+            # calculate next genaration of solutions
+            # note we will not take care of the solutions of the last round,
+            # because achive best solution in it is very unlikely
             best_val, best = self.next_generation()
             from_last_ch += 1
-            # if we have solution
-            if self.best_val == 0:
-                self.best_of_all_val = best_val
-                self.best_of_all_sol = best.copy()
-                break
-
-        # plt.plot(gen_list, avg_list, label = "avg score vs generation")
-        # plt.plot(gen_list, best_list, label = "best score vs generation")
-        # plt.legend()
-        # plt.show()
-        print("finished", str(i), "rounds, best score: ", self.best_of_all_val)
-        print("best solution: ")
+     
+        plt.plot(gen_list, avg_list, label = "avg score vs generation")
+        plt.plot(gen_list, best_list, label = "best score vs generation")
+        my_t = str(type(self).__name__)
+        my_t += ("\n" + file_name)
+        plt.text(6, 14, my_t, fontsize = 12, bbox = dict(facecolor = 'red', alpha = 0.5))
+        plt.legend()
+        plt.title("score for generation \n gentics agorithem solving futoshiki problem")
+        plt.xlabel("generation")
+        plt.ylabel("score")
+        plt.show()
+        print("Finished ", str(i), " rounds")
+        if self.best_of_all_val != 0:
+            print("Best score: ", self.best_of_all_val)
+            print("Best solution: ")
+        else:
+            print("Hurray, we find solution :")
         self.print_best_sol(self.best_of_all_sol)
 
     # this function print the board of the best solution with all the signs on it
@@ -405,9 +407,9 @@ class GenericAlgo:
             print(*[" " + str(row[i]) + " " for i in range(len(row))])
 
 
-class DarWinAlgo(GenericAlgo):
+class DarwinAlgo(GenericAlgo):
     def __init__(self, sols):
-        super(DarWinAlgo, self).__init__(sols)
+        super(DarwinAlgo, self).__init__(sols)
 
     # we update this method to support Darwin algorithm option
     def next_generation(self):
@@ -440,24 +442,58 @@ class LemarkAlgo(GenericAlgo):
 
 
 def get_file_path():
-    default = "input/5_easy.txt"
-    window = tk.Tk()
-    window.title("Genetic Algorithms")
-    window.eval('tk::PlaceWindow . center')
-    frame = tk.Frame(window)
-    frame.pack()
-    label1 = tk.Label(frame, text="Please insert the path of your file: ", padx=20, pady=10)
-    d = tk.Entry(frame, width=30, borderwidth=5)
-    d.insert(tk.END, default)
-    exit = tk.Button(frame, text="change new file", padx=20, pady=10, command=window.quit)
-    label1.grid(row=0, column=0)
-    d.grid(row=0, column=1)
-    exit.grid(row=5, column=0, columnspan=2)
-    window.mainloop()
-    new_path = d.get()
-    window.destroy()
-    window.quit()
+    done = False
+    while(not done):
+        default = "input/5_easy.txt"
+        window = tk.Tk()
+        window.title("Genetic Algorithms")
+        window.eval('tk::PlaceWindow . center')
+        frame = tk.Frame(window)
+        frame.pack()
+        label1 = tk.Label(frame, text="Please insert the path of your file: ", padx=20, pady=10)
+        d = tk.Entry(frame, width=30, borderwidth=5)
+        d.insert(tk.END, default)
+        exit = tk.Button(frame, text="OK", padx=20, pady=10, command=window.quit)
+        label1.grid(row=0, column=0)
+        d.grid(row=0, column=1)
+        exit.grid(row=5, column=0, columnspan=2)
+        window.mainloop()
+        new_path = d.get()
+        window.destroy()
+        window.quit()
+        done = True
+        if not os.path.exists(new_path):
+            print("file dosent exist")
+            done = False
+    global file_name
+    file_name = os.path.basename(new_path)
     return new_path
+
+def get_num_rounds():
+    done = False
+    while(not done):
+        default = "1000"
+        window = tk.Tk()
+        window.title("Genetic Algorithms")
+        window.eval('tk::PlaceWindow . center')
+        frame = tk.Frame(window)
+        frame.pack()
+        label1 = tk.Label(frame, text="Please insert number of generations to run the algorithem ", padx=20, pady=10)
+        d = tk.Entry(frame, width=30, borderwidth=5)
+        d.insert(tk.END, default)
+        exit = tk.Button(frame, text="OK", padx=20, pady=10, command=window.quit)
+        label1.grid(row=0, column=0)
+        d.grid(row=0, column=1)
+        exit.grid(row=5, column=0, columnspan=2)
+        window.mainloop()
+        num_rounds = d.get()
+        window.destroy()
+        window.quit()
+        done = True
+        if not num_rounds.isdigit():
+            print("pleas enter valid number")
+            done = False
+    return int(num_rounds)
 
 
 def choose_algorithm(sols):
@@ -480,7 +516,7 @@ def choose_algorithm(sols):
 
     def ChooseDarwin():
         global algo
-        algo = DarWinAlgo(sols)
+        algo = DarwinAlgo(sols)
         root.destroy()
 
     label = tk.Label(frame, text="Please choose your genetic algorithm: ", bd=12, fg="black", )
@@ -510,11 +546,7 @@ def choose_algorithm(sols):
 if __name__ == '__main__':
     openInputFile(get_file_path())
     random_sols = initial_random_sols()
-    while True:
-        algo = choose_algorithm(random_sols)
-        algo.run_algo(1000)
-        ask_for_retry = messagebox.askyesno("Genetic Algorithms", "Algo Simulation is over\n"
-                                                                  "Do you want to start the simulation again?")
-        if not ask_for_retry:
-            break
-    # TODO לשים לבנת חבלה במעבדה של אונגר
+    algo = choose_algorithm(random_sols)
+    algo.run_algo(get_num_rounds())
+
+
