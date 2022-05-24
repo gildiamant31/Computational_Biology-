@@ -4,6 +4,8 @@ Itamar Twersky
 """
 import tkinter as tk
 import random
+from tkinter import messagebox
+
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -334,7 +336,7 @@ class GenericAlgo:
         plt.title("score for generation \n gentics agorithem solving futoshiki problem")
         plt.xlabel("generation")
         plt.ylabel("score")
-        plt.show()
+
         print("Finished ", str(i), " rounds")
         if self.best_of_all_val != 0:
             print("Best score: ", self.best_of_all_val)
@@ -342,6 +344,7 @@ class GenericAlgo:
         else:
             print("Hurray, we find solution :")
         self.print_best_sol(self.best_of_all_sol)
+        plt.show()
 
     # this function print the board of the best solution with all the signs on it
     def print_best_sol(self, sol):
@@ -547,3 +550,4 @@ if __name__ == '__main__':
     random_sols = initial_random_sols()
     algo = choose_algorithm(random_sols)
     algo.run_algo(get_num_rounds())
+    messagebox.showinfo("Genetic Algorithms", "Algorithm's running was finished\n       have a nice day!!")
