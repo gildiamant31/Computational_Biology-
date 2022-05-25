@@ -62,8 +62,18 @@ def initial_random_sols():
         # new_sol = np.random.randint(1, matrix_size[0] + 1, size=matrix_size)
         new_sol = get_random_sol(matrix_size)
         for i in range(len(init_digits_coords)):
-            # add the initial values from the input file
-            new_sol[init_digits_coords[i][0][0]][init_digits_coords[i][0][1]] = init_digits_coords[i][1]
+            # take care for the initial values from the input file
+            # if the wanted value not in its place
+            if new_sol[init_digits_coords[i][0][0]][init_digits_coords[i][0][1]] != init_digits_coords[i][1]:
+                # save wanted value
+                val = init_digits_coords[i][1]
+                # save current value
+                curr = new_sol[init_digits_coords[i][0][0]][init_digits_coords[i][0][1]]
+                # find where it is in the line
+                where_in_line = np.where(new_sol[init_digits_coords[i][0][0]] == val)[0][0]
+                # swap
+                new_sol[init_digits_coords[i][0][0]][init_digits_coords[i][0][1]] = val
+                new_sol[init_digits_coords[i][0][0]][where_in_line] = curr
         sols_array.append(new_sol)
     return sols_array
 
