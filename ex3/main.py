@@ -7,6 +7,7 @@ import pandas as pd
 import sys
 import os
 import pygame
+from math import sin, cos, pi
 from tkinter import *
 from tkinter import messagebox
 import random
@@ -24,10 +25,49 @@ def convert_data():
     data_features = df[feature_cols].to_numpy()
     # Economic situation: Numbers between 1 to 10
     data_labels = marks_list = df["Economic Cluster"].tolist()
-    print(data_features)
-    print(data_labels)
     return data_features, data_labels
 
+def draw_hexagon_cell(surface, color,
+                         radius, position):
+    n, r = 6, radius
+    x, y = position
+    pygame.draw.polygon(surface, color, [
+        (x + r * cos(2 * pi * i / n),
+         y + r * sin(2 * pi * i / n))
+        for i in range(n)
+    ])
+
+
+def draw_board ():
+    # black background
+    bg_color = (0, 0, 0)
+
+    w, h = 600, 600
+
+    pygame.init()
+    root = pygame.display.set_mode((w, h))
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+
+        root.fill(bg_color)
+        radius = min(w, h) / 50 + 10
+        init_x = w / 2 - 170
+        init_y = h / 2 - 150
+        for i in range(9):
+            cells_num = 9 - abs(4 - i)
+            for j in range(cells_num):
+                extra_width = radius * (9 - cells_num)
+                x = init_x + extra_width + j * 2 * radius
+                y = init_y + 1.5 * i * radius
+                color = tuple(np.random.randint(256, size=3))
+                draw_hexagon_cell(root, color, radius, (x, y))
+
+
+        pygame.display.flip()
 
 # this function will run a simulation and
 # create visualization for the using pygame
@@ -205,4 +245,5 @@ def convert_data():
 
 if __name__ == '__main__':
     train_set, train_labels = convert_data()
+    draw_board()
     # TODO should we add normalization?
