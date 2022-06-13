@@ -93,7 +93,7 @@ class Som_model:
             best_idxes = [None, None]
             # calculate distance for every cluster, if its new best distance - save itand indexes
             for i in range(len(self.clusters)):
-                for j in range(len(self.clusters[i]))
+                for j in range(len(self.clusters[i])):
                     dist = np.linalg.norm(sample - self.clusters[i][j])
                     if dist < best_dist:
                         best_dist = dist
