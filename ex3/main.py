@@ -8,7 +8,7 @@ import pandas as pd
 import sys
 import os
 import pygame
-from math import sin, cos, pi, floor
+from math import sin, cos, pi, floor, ceil
 from tkinter import *
 from tkinter import messagebox
 import numpy as np
@@ -87,16 +87,16 @@ class Som_model:
         same_map_iter = 0 
         # run 10000 times
         for i in range(100):
-            print(i)
+            # print(i)
             prev_map = self.map.copy()
             self.map_sampels()
             # if the map didnt change for several times - its converge and stop train
             if prev_map == self.map:
-                print("AAA")
+                # print("AAA")
                 same_map_iter += 1
                 if same_map_iter == same_itrations_to_converge:
-                    print("BBB")
-                    print(len(set(self.map)))
+                    # print("BBB")
+                    # print(len(set(self.map)))
                     break
     
     def normalize(self):
@@ -211,7 +211,7 @@ class Som_model:
         if range_num == 0:
             color = (255, 255, 255)
             return color
-        tmp_divide = math.ceil(255 / range_num)
+        tmp_divide = ceil(255 / range_num)
         color = (tmp_divide + 5, tmp_divide - 10, tmp_divide + 10)
         return color
 
@@ -224,12 +224,15 @@ class Som_model:
         for idx, cluster_idx in enumerate(self.map):
             r_idx = cluster_idx[0]
             c_idx = cluster_idx[1]
+            test =tmp_economic_per_cluster[r_idx][c_idx]
+
             tmp_economic_per_cluster[r_idx][c_idx][0] += labels[idx]
             # count the num of times that we add value
             tmp_economic_per_cluster[r_idx][c_idx][1] += 1
         avg_economic = []
         for row in tmp_economic_per_cluster:
             tmp_row = []
+            print(row)
             for col in row:
                 if col[0] == 0:
                     tmp_row.append(0)
@@ -292,11 +295,12 @@ def draw_board():
 
 
 if __name__ == '__main__':
-    our_model = Som_model("ex3/Elec_24.csv")
+    our_model = Som_model("Elec_24.csv")
     # create random clusters
     our_model.init_array_of_clusters()
     # train model
     our_model.train()
+    print(our_model.initial_colors())
 
     # our_model.train_n_times(10)
     # our_model.draw_board()
