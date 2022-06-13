@@ -29,25 +29,27 @@ num_of_rings = 3
 
 color_label = "Economic Cluster"
 
+
 def fn_dist(dist):
-    return 1 if dist == 0 else 1/(dist*10)
+    return 1 if dist == 0 else 1 / (dist * 10)
+
 
 class Som_model:
     def __init__(self, csv_name):
         df = pd.read_csv(csv_name)
         # save names and feuters
-        self.cities_names = df.iloc[:,0].tolist()
-        self.features = df.iloc[:,1:]
+        self.cities_names = df.iloc[:, 0].tolist()
+        self.features = df.iloc[:, 1:]
         self.samples = self.features.to_numpy(dtype='float64')
         self.min_max = self.min_max()
         self.clusters = []
-        self.map = [None]*self.samples.shape[0]
+        self.map = [None] * self.samples.shape[0]
 
     def min_max(self):
         min_max = []
         for col in self.features:
             # get the maximum & minimum values of this column
-            
+
             # TODO check median 
             col_med = self.features[col].median()
             c_min = max([0, self.features[col].min()])
@@ -56,12 +58,11 @@ class Som_model:
         return min_max
 
     def create_cluster(self):
-            cluster = []
-            for idx, col in enumerate(self.features.columns):
-                cluster.append(float(np.random.randint(self.min_max[idx][0], self.min_max[idx][1])))
-            return np.asarray(cluster)
+        cluster = []
+        for idx, col in enumerate(self.features.columns):
+            cluster.append(float(np.random.randint(self.min_max[idx][0], self.min_max[idx][1])))
+        return np.asarray(cluster)
 
-    
     # create 2D list with rows with different length for each one - like on the hexagon grid
     def init_array_of_clusters(self):
         for i in range(9):
@@ -71,7 +72,6 @@ class Som_model:
             for j in range(cells_num):
                 new_row.append(self.create_cluster())
             self.clusters.append(new_row)
-
 
     # create 2D list with rows with different length for each one - like on the hexagon grid
     '''def init_array_of_clusters(self):
@@ -84,13 +84,9 @@ class Som_model:
                 new_row.append(np.random.uniform(size=self.features.shape[1]))
             self.clusters.append(new_row)'''
 
-    
-
-
-    
     def train(self):
         self.normalize()
-        same_map_iter = 0 
+        same_map_iter = 0
         # run 10000 times
         for i in range(max_iterations):
             # print(i)
@@ -104,18 +100,16 @@ class Som_model:
                     # print("BBB")
                     # print(len(set(self.map)))
                     break
-    
+
     def normalize(self):
         min_max_s = MinMaxScaler()
         self.samples = min_max_s.fit_transform(self.samples)
         for i in range(len(self.clusters)):
             for j in range(len(self.clusters[i])):
-                a = min_max_s.transform(self.clusters[i][j].reshape(1, -1)) 
+                a = min_max_s.transform(self.clusters[i][j].reshape(1, -1))
                 self.clusters[i][j] = a
                 # a = a.reshape(-1)
-        
 
-   
     # will map sampels to clusters
     def map_sampels(self, update_wights=True):
         for idx in range(self.samples.shape[0]):
@@ -126,24 +120,22 @@ class Som_model:
             # update wights
             if update_wights:
                 self.update_clusters_wights(sample, clusters_idx[0])
-    
+
     # will get 2 most close clusters and the best distance
-    def get_2_closeset_clusters(self, sample):      
-            best_dist = np.inf
-            # will save the two 2d indexes
-            best_idxes = [None, None]
-            # calculate distance for every cluster, if its new best distance - save itand indexes
-            for i in range(len(self.clusters)):
-                for j in range(len(self.clusters[i])):
-                    dist = np.linalg.norm(sample - self.clusters[i][j])
-                    if dist < best_dist:
-                        best_dist = dist
-                        best_idxes[1] = best_idxes[0]
-                        best_idxes[0] = tuple([i, j])
+    def get_2_closeset_clusters(self, sample):
+        best_dist = np.inf
+        # will save the two 2d indexes
+        best_idxes = [None, None]
+        # calculate distance for every cluster, if its new best distance - save itand indexes
+        for i in range(len(self.clusters)):
+            for j in range(len(self.clusters[i])):
+                dist = np.linalg.norm(sample - self.clusters[i][j])
+                if dist < best_dist:
+                    best_dist = dist
+                    best_idxes[1] = best_idxes[0]
+                    best_idxes[0] = tuple([i, j])
 
-            return best_idxes ,best_dist
-
-        
+        return best_idxes, best_dist
 
     # will update clusters wights according to maped sample
     def update_clusters_wights(self, sample, cluster_idx):
@@ -155,7 +147,7 @@ class Som_model:
         for dist, ring in enumerate(neighbors_rings):
             for clusIdx in ring:
                 cluster = self.clusters[clusIdx[0]][clusIdx[1]]
-                cluster += alpha*fn_dist(dist)*(sample - cluster)
+                cluster += alpha * fn_dist(dist) * (sample - cluster)
 
     # will the neighbors of cluster
     # will return as list of rings
@@ -176,49 +168,62 @@ class Som_model:
             all_neighbors.update(new_ring)
             rings_list.append(new_ring)
         return rings_list
-            
 
     # will get list of indexes  of the 6 cluster neighbors
     def get_6_neighbors(self, cluster_idx):
         neighb = []
-        middle_line = floor(len(self.clusters)/2)
+        middle_line = floor(len(self.clusters) / 2)
         # add left and right neighbors
-        neighb.extend([tuple([cluster_idx[0],cluster_idx[1]+1]), tuple([cluster_idx[0],cluster_idx[1]-1])])
+        neighb.extend([tuple([cluster_idx[0], cluster_idx[1] + 1]), tuple([cluster_idx[0], cluster_idx[1] - 1])])
         # take care of dfferent indexes situation 
         if cluster_idx[0] == middle_line:
             # add upper neighbors 
-            neighb.extend([tuple([cluster_idx[0]-1,cluster_idx[1]-1]),tuple([cluster_idx[0]-1,cluster_idx[1]])])
+            neighb.extend(
+                [tuple([cluster_idx[0] - 1, cluster_idx[1] - 1]), tuple([cluster_idx[0] - 1, cluster_idx[1]])])
             # add lower neighbors
-            neighb.extend([tuple([cluster_idx[0]+1,cluster_idx[1]-1]),tuple([cluster_idx[0]+1,cluster_idx[1]])])
+            neighb.extend(
+                [tuple([cluster_idx[0] + 1, cluster_idx[1] - 1]), tuple([cluster_idx[0] + 1, cluster_idx[1]])])
         elif cluster_idx[0] < middle_line:
             # add upper neighbors 
-            neighb.extend([tuple([cluster_idx[0]-1,cluster_idx[1]-1]),tuple([cluster_idx[0]-1,cluster_idx[1]])])
+            neighb.extend(
+                [tuple([cluster_idx[0] - 1, cluster_idx[1] - 1]), tuple([cluster_idx[0] - 1, cluster_idx[1]])])
             # add lower neighbors
-            neighb.extend([tuple([cluster_idx[0]+1,cluster_idx[1]]),tuple([cluster_idx[0]+1,cluster_idx[1]+1])])
-        
-        else: #  cluster_idx[0] > middle_line
+            neighb.extend(
+                [tuple([cluster_idx[0] + 1, cluster_idx[1]]), tuple([cluster_idx[0] + 1, cluster_idx[1] + 1])])
+
+        else:  # cluster_idx[0] > middle_line
             # add upper neighbors 
-            neighb.extend([tuple([cluster_idx[0]-1,cluster_idx[1]]),tuple([cluster_idx[0]-1,cluster_idx[1]+1])])
+            neighb.extend(
+                [tuple([cluster_idx[0] - 1, cluster_idx[1]]), tuple([cluster_idx[0] - 1, cluster_idx[1] + 1])])
             # add lower neighbors
-            neighb.extend([tuple([cluster_idx[0]+1,cluster_idx[1]-1]),tuple([cluster_idx[0]+1,cluster_idx[1]])])
+            neighb.extend(
+                [tuple([cluster_idx[0] + 1, cluster_idx[1] - 1]), tuple([cluster_idx[0] + 1, cluster_idx[1]])])
         neighb = self.remove_unvalid(neighb)
         return neighb
-            
+
     # will remove unvalid indexes from list of clusters indexes
     def remove_unvalid(self, clusters_idx_list):
         valid_list = []
         for idxes in clusters_idx_list:
             # if not row or coll is out of bund
-            if not (idxes[0] < 0 or idxes[0] >= len (self.clusters) or idxes[1] < 0 or idxes[1] >= len (self.clusters[idxes[0]])):
+            if not (idxes[0] < 0 or idxes[0] >= len(self.clusters) or idxes[1] < 0 or idxes[1] >= len(
+                    self.clusters[idxes[0]])):
                 valid_list.append(idxes)
         return valid_list
-    
+
     def create_color(self, range_num, all_max):
+        range_num = int(range_num)
         if range_num == 0:
             color = (255, 255, 255)
             return color
-        tmp_divide = (range_num/all_max)
-        color = (ceil(200*(tmp_divide)), ceil(20*(tmp_divide)),ceil(120*(tmp_divide)))
+        range_list = [i for i in range(1, 10)]
+        tmp_divide = (range_num / all_max)
+        if range_num in range_list[:3]:
+            color = (255, ceil(20 * (tmp_divide)), ceil(120 * (tmp_divide)))
+        elif range_num in range_list[3:6]:
+            color = (ceil(20 * (tmp_divide)), 255, ceil(120 * (tmp_divide)))
+        elif range_num in range_list[6:9]:
+            color = (ceil(20 * (tmp_divide)), ceil(120 * (tmp_divide)), 255)
         return color
 
     def initial_colors(self):
@@ -228,11 +233,12 @@ class Som_model:
         for i in range(9):
             zero_row = []
             for i in range(len(self.clusters[i])):
-                zero_row.append([0,0])
+                zero_row.append([0, 0])
             tmp_economic_per_cluster.append(zero_row)
         for idx, cluster_idx in enumerate(self.map):
             r_idx = cluster_idx[0]
             c_idx = cluster_idx[1]
+            test = tmp_economic_per_cluster[r_idx][c_idx]
             tmp_economic_per_cluster[r_idx][c_idx][0] += labels[idx]
             # count the num of times that we add value
             tmp_economic_per_cluster[r_idx][c_idx][1] += 1
@@ -250,9 +256,10 @@ class Som_model:
         for row in avg_economic:
             tmp_row = []
             for col in row:
-                tmp_row.append(self.create_color(col,all_max))
+                tmp_row.append(self.create_color(col, all_max))
             colors.append(tmp_row)
         return colors
+
 
 # function to draw single hexagon
 def draw_hexagon_cell(surface, color,
@@ -303,7 +310,7 @@ def draw_board(model):
 
 
 if __name__ == '__main__':
-    our_model = Som_model("ex3/Elec_24.csv")
+    our_model = Som_model("Elec_24.csv")
     # create random clusters
     our_model.init_array_of_clusters()
     # train model
