@@ -237,6 +237,7 @@ class Som_model:
             # count the num of times that we add value
             tmp_economic_per_cluster[r_idx][c_idx][1] += 1
         avg_economic = []
+        all_avg = []
         for row in tmp_economic_per_cluster:
             tmp_row = []
             for col in row:
@@ -244,8 +245,10 @@ class Som_model:
                     tmp_row.append(0)
                     continue
                 tmp_row.append(col[0] / col[1])
+                all_avg.append(col[0] / col[1])
             avg_economic.append(tmp_row)
-        all_max = max(labels)
+        # all_max = max(labels)
+        all_max = max(all_avg)
         colors = []
         for row in avg_economic:
             tmp_row = []
