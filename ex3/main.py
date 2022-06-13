@@ -220,24 +220,25 @@ class Som_model:
         counter = []
         labels = self.features["Economic Cluster"].tolist()
         for i in range(9):
-            zero_row = [0] * len(self.clusters[i])
+            zero_row = []
+            for i in range(len(self.clusters[i])):
+                zero_row.append([0,0])
             tmp_economic_per_cluster.append(zero_row)
-            counter.append(zero_row.copy())
         for idx, cluster_idx in enumerate(self.map):
             r_idx = cluster_idx[0]
             c_idx = cluster_idx[1]
             test =tmp_economic_per_cluster[r_idx][c_idx]
-            tmp_economic_per_cluster[r_idx][c_idx] += labels[idx]
+            tmp_economic_per_cluster[r_idx][c_idx][0] += labels[idx]
             # count the num of times that we add value
-            counter[r_idx][c_idx] += 1
+            tmp_economic_per_cluster[r_idx][c_idx][1] += 1
         avg_economic = []
-        for row in range(len(tmp_economic_per_cluster)):
+        for row in tmp_economic_per_cluster:
             tmp_row = []
-            for col in range(len(tmp_economic_per_cluster[row])):
-                if tmp_economic_per_cluster[row][col] == 0:
+            for col in row:
+                if col[0] == 0:
                     tmp_row.append(0)
                     continue
-                tmp_row.append(tmp_economic_per_cluster[row][col] / counter[row][col])
+                tmp_row.append(col[0] / col[1])
             avg_economic.append(tmp_row)
 
         colors = []
@@ -261,11 +262,12 @@ def draw_hexagon_cell(surface, color,
 
 
 # function to draw one board of big hexagon which contain 61 hexagons
-def draw_board():
+def draw_board(model):
     # black background
     bg_color = (0, 0, 0)
 
     w, h = 600, 600
+    colors = model.initial_colors()
 
     pygame.init()
     root = pygame.display.set_mode((w, h))
@@ -288,7 +290,7 @@ def draw_board():
                 x = init_x + extra_width + j * 2 * radius
                 y = init_y + 1.6 * i * radius
                 # create random color
-                color = tuple(np.random.randint(256, size=3))
+                color = colors[i][j]
                 draw_hexagon_cell(root, color, radius, (x, y))
 
         pygame.display.flip()
@@ -301,10 +303,10 @@ if __name__ == '__main__':
     our_model.init_array_of_clusters()
     # train model
     our_model.train()
-    print(our_model.initial_colors())
+    # print(our_model.initial_colors())
 
     # our_model.train_n_times(10)
-    # our_model.draw_board()
+    draw_board(our_model)
 
     # TODO  add option to select color by label (color should be the avarge value of residents(why not 
     # the inner vector value))
