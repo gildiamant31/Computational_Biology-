@@ -124,6 +124,7 @@ class Som_model:
     # will get 2 most close clusters and the best distance
     def get_2_closeset_clusters(self, sample):
         best_dist = np.inf
+        sec_dist = best_dist -1
         # will save the two 2d indexes
         best_idxes = [None, None]
         # calculate distance for every cluster, if its new best distance - save itand indexes
@@ -134,6 +135,8 @@ class Som_model:
                     best_dist = dist
                     best_idxes[1] = best_idxes[0]
                     best_idxes[0] = tuple([i, j])
+                elif dist < sec_dist and best_idxes[1] is None:
+                    best_idxes[1] = tuple([i, j])
 
         return best_idxes, best_dist
 
@@ -312,17 +315,50 @@ def draw_board(model):
         sleep(1)
 
 
+def get_topological_distance(models):
+    distances = []
+    for model in models:
+        distance_sum = 0
+        for sample in model.samples:
+            best_idxes, best_dist = model.get_2_closeset_clusters(sample)
+            horizontal_dist = abs(best_idxes[0][0] - best_idxes[1][0])
+            vertical_dist = abs(best_idxes[0][1] - best_idxes[1][1])
+            distance_sum += (horizontal_dist + vertical_dist)
+        distances.append(distance_sum)
+    return distances
+
+
+def calculate_distances(models):
+    distances = []
+    for model in models:
+        distance_sum = 0
+        for idx, cluster_idx in enumerate(model.map):
+            r_idx = cluster_idx[0]
+            c_idx = cluster_idx[1]
+            sample = model.samples[idx]
+            distance_sum += np.linalg.norm(sample - model.clusters[r_idx][c_idx])
+        distances.append(distance_sum)
+    return distances
+
+
+def choose_best_model(num_of_models):
+    models = []
+    for i in range(num_of_models):
+        new_model = Som_model("Elec_24.csv")
+        new_model.init_array_of_clusters()
+        new_model.train()
+        models.append(new_model)
+    distances = calculate_distances(models)
+    topological = get_topological_distance(models)
+
+    # סתם לדוגמא אבל צריך להחליט איך מחשבים אחרי שיש לנו שני מערכי מרחקים לפי כל שיטה
+    return models[0]
+
+
 if __name__ == '__main__':
-    our_model = Som_model("Elec_24.csv")
-    # create random clusters
-    our_model.init_array_of_clusters()
-    # train model
-    our_model.train()
-    print(len(set(our_model.map)))
-    # print(our_model.initial_colors())
+    # inset to the function the number of models
+    our_model = choose_best_model(1)
     draw_board(our_model)
-    # our_model.train_n_times(10)
-    # draw_board(our_model)
 
     # TODO  add option to select color by label (color should be the avarge value of residents(why not 
     # the inner vector value))
