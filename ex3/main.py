@@ -217,26 +217,27 @@ class Som_model:
 
     def initial_colors(self):
         tmp_economic_per_cluster = []
+        counter = []
         labels = self.features["Economic Cluster"].tolist()
         for i in range(9):
-            zero_row = [[0, 0]] * len(self.clusters[i])
+            zero_row = [0] * len(self.clusters[i])
             tmp_economic_per_cluster.append(zero_row)
+            counter.append(zero_row.copy())
         for idx, cluster_idx in enumerate(self.map):
             r_idx = cluster_idx[0]
             c_idx = cluster_idx[1]
             test =tmp_economic_per_cluster[r_idx][c_idx]
-
-            tmp_economic_per_cluster[r_idx][c_idx][0] += labels[idx]
+            tmp_economic_per_cluster[r_idx][c_idx] += labels[idx]
             # count the num of times that we add value
-            tmp_economic_per_cluster[r_idx][c_idx][1] += 1
+            counter[r_idx][c_idx] += 1
         avg_economic = []
-        for row in tmp_economic_per_cluster:
+        for row in range(len(tmp_economic_per_cluster)):
             tmp_row = []
-            print(row)
-            for col in row:
-                if col[0] == 0:
+            for col in range(len(tmp_economic_per_cluster[row])):
+                if tmp_economic_per_cluster[row][col] == 0:
                     tmp_row.append(0)
-                tmp_row.append(col[0] / col[1])
+                    continue
+                tmp_row.append(tmp_economic_per_cluster[row][col] / counter[row][col])
             avg_economic.append(tmp_row)
 
         colors = []
