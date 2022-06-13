@@ -32,19 +32,8 @@ class Som_model:
         # save names and feuters
         self.cities_names = df.iloc[:,0].tolist()
         self.features = df.iloc[:,1:]
-        self.samples = self.features.to_numpy()
+        self.samples = self.features.to_numpy(dtype='float64')
         self.min_max = self.min_max()
-
-        # normilize sampels to prevent scale impact on the results
-        '''min_max_scaler = MinMaxScaler()
-        # for col in range(self.samples.shape[1]):
-        #     v = self.samples[:,col]
-        #     self.samples[:,col] = (v - v.min()) / (v.max() - v.min())
-        self.samples = min_max_scaler.fit_transform(self.samples)'''
-        '''# round numbers to reduce running time
-        # TODO check impact on running time
-        # self.samples = np.around(self.samples, 6)'''
-
         self.clusters = []
         self.map = [None]*self.samples.shape[0]
 
@@ -63,7 +52,7 @@ class Som_model:
     def create_cluster(self):
             cluster = []
             for idx, col in enumerate(self.features.columns):
-                cluster.append(np.random.randint(self.min_max[idx][0], self.min_max[idx][1]))
+                cluster.append(float(np.random.randint(self.min_max[idx][0], self.min_max[idx][1])))
             return np.asarray(cluster)
 
     
