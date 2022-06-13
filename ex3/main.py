@@ -14,14 +14,20 @@ from tkinter import messagebox
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
-# these are all the global variables which define in the instructions of this exercise.
+# these are all the global variables which define in the instructions of this exercise:
+
 # how many rows and columns of clusters
 dim_size = 9
-same_itrations_to_converge = 10
+#
+same_iterations_to_converge = 10
+# max iterations to run if there is no converge
+max_iterations = 100
 num_of_trains = 10
 alpha = 0.1
 # how many neighbors rings around the sample's cluster to update
 num_of_rings = 3
+
+color_label = "Economic Cluster"
 
 def fn_dist(dist):
     return 1 if dist == 0 else 1/(dist*10)
@@ -44,9 +50,9 @@ class Som_model:
             
             # TODO check median 
             col_med = self.features[col].median()
-            min = 0
-            max = round(col_med + col_med)
-            min_max.append((min, max))
+            c_min = max([0, self.features[col].min()])
+            c_max = min([round(col_med + col_med), self.features[col].max()])
+            min_max.append((c_min, c_max))
         return min_max
 
     def create_cluster(self):
@@ -86,7 +92,7 @@ class Som_model:
         self.normalize()
         same_map_iter = 0 
         # run 10000 times
-        for i in range(100):
+        for i in range(max_iterations):
             # print(i)
             prev_map = self.map.copy()
             self.map_sampels()
@@ -94,7 +100,7 @@ class Som_model:
             if prev_map == self.map:
                 # print("AAA")
                 same_map_iter += 1
-                if same_map_iter == same_itrations_to_converge:
+                if same_map_iter == same_iterations_to_converge:
                     # print("BBB")
                     # print(len(set(self.map)))
                     break
@@ -207,18 +213,18 @@ class Som_model:
                 valid_list.append(idxes)
         return valid_list
     
-    def create_color(self, range_num):
+    def create_color(self, range_num, all_max):
         if range_num == 0:
             color = (255, 255, 255)
             return color
-        tmp_divide = ceil(255 / range_num)
-        color = (tmp_divide + 5, tmp_divide - 10, tmp_divide + 10)
+        tmp_divide = (range_num/all_max)
+        color = (ceil(200*(tmp_divide)), ceil(20*(tmp_divide)),ceil(120*(tmp_divide)))
         return color
 
     def initial_colors(self):
         tmp_economic_per_cluster = []
         counter = []
-        labels = self.features["Economic Cluster"].tolist()
+        labels = self.features[color_label].tolist()
         for i in range(9):
             zero_row = []
             for i in range(len(self.clusters[i])):
@@ -227,7 +233,6 @@ class Som_model:
         for idx, cluster_idx in enumerate(self.map):
             r_idx = cluster_idx[0]
             c_idx = cluster_idx[1]
-            test =tmp_economic_per_cluster[r_idx][c_idx]
             tmp_economic_per_cluster[r_idx][c_idx][0] += labels[idx]
             # count the num of times that we add value
             tmp_economic_per_cluster[r_idx][c_idx][1] += 1
@@ -240,12 +245,12 @@ class Som_model:
                     continue
                 tmp_row.append(col[0] / col[1])
             avg_economic.append(tmp_row)
-
+        all_max = max(labels)
         colors = []
         for row in avg_economic:
             tmp_row = []
             for col in row:
-                tmp_row.append(self.create_color(col))
+                tmp_row.append(self.create_color(col,all_max))
             colors.append(tmp_row)
         return colors
 
@@ -298,15 +303,16 @@ def draw_board(model):
 
 
 if __name__ == '__main__':
-    our_model = Som_model("Elec_24.csv")
+    our_model = Som_model("ex3/Elec_24.csv")
     # create random clusters
     our_model.init_array_of_clusters()
     # train model
     our_model.train()
+    print(len(set(our_model.map)))
     # print(our_model.initial_colors())
-
-    # our_model.train_n_times(10)
     draw_board(our_model)
+    # our_model.train_n_times(10)
+    # draw_board(our_model)
 
     # TODO  add option to select color by label (color should be the avarge value of residents(why not 
     # the inner vector value))
