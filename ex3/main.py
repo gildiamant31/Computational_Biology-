@@ -20,7 +20,7 @@ dim_size = 9
 same_iterations_to_converge = 10
 # max iterations to run if there is no converge
 max_iterations = 100
-alpha = 0.1
+alpha = 0.4
 # how many neighbors rings around the sample's cluster to update
 num_of_rings = 3
 # how much models do we want to check
@@ -31,7 +31,7 @@ color_label = "Economic Cluster"
 
 
 def fn_dist(dist):
-    return 1 if dist == 0 else 1 / (dist * 10)
+    return 1 if dist == 0 else 1 / (dist * 5)
 
 
 class Som_model:
@@ -424,7 +424,7 @@ def getInput():
     p2.insert(END, str(num_of_rings))
     variable = StringVar(window)
     variable.set(color_label)
-    option_menu = OptionMenu(window, variable, color_label, "Total Votes")
+    option_menu = OptionMenu(window, variable, color_label, "Total Votes", "Labour", "Yamina", "Yahadot Hatora", "The Joint Party", "Zionut Datit", "Kachul Lavan", "Israel Betinu", "Licod", "Merez","Raam",  "Yesh Atid", "Shas", "Tikva Hadasha")
     x = Entry(window, width=30, borderwidth=5)
     x.insert(END, str(X))
     Exit = Button(window, text="Start simulation", padx=20, pady=10, command=window.quit)
