@@ -5,8 +5,6 @@ Itamar Twersky
 
 from time import sleep
 import pandas as pd
-import sys
-import os
 import pygame
 from math import sin, cos, pi, floor, ceil
 from tkinter import *
@@ -18,7 +16,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 # how many rows and columns of clusters
 dim_size = 9
-#
+
 same_iterations_to_converge = 10
 # max iterations to run if there is no converge
 max_iterations = 100
@@ -29,6 +27,7 @@ num_of_rings = 3
 # how much models do we want to check
 num_of_models = 1
 
+# default labels
 color_label = "Economic Cluster"
 
 
@@ -45,20 +44,20 @@ class Som_model:
         self.samples = self.features.to_numpy(dtype='float64')
         self.min_max = self.min_max()
         self.clusters = []
+        # will save the cluster index for every sample which mapped to it
         self.map = [None] * self.samples.shape[0]
 
     def min_max(self):
         min_max = []
         for col in self.features:
             # get the maximum & minimum values of this column
-
-            # TODO check median 
             col_med = self.features[col].median()
             c_min = max([0, self.features[col].min()])
             c_max = min([round(col_med + col_med), self.features[col].max()])
             min_max.append((c_min, c_max))
         return min_max
 
+    # create single cluster which contain one vector with random values using min and max dataset ranges
     def create_cluster(self):
         cluster = []
         for idx, col in enumerate(self.features.columns):
@@ -75,34 +74,21 @@ class Som_model:
                 new_row.append(self.create_cluster())
             self.clusters.append(new_row)
 
-    # create 2D list with rows with different length for each one - like on the hexagon grid
-    '''def init_array_of_clusters(self):
-        self.clusters = []
-        for i in range(9):
-            new_row = []
-            # for getting different length for every row
-            cells_num = 9 - abs(4 - i)
-            for j in range(cells_num):
-                new_row.append(np.random.uniform(size=self.features.shape[1]))
-            self.clusters.append(new_row)'''
-
+    # "train" the mosel
     def train(self):
         self.normalize()
         same_map_iter = 0
         # run 10000 times
         for i in range(max_iterations):
-            # print(i)
             prev_map = self.map.copy()
             self.map_sampels()
             # if the map didnt change for several times - its converge and stop train
             if prev_map == self.map:
-                # print("AAA")
                 same_map_iter += 1
                 if same_map_iter == same_iterations_to_converge:
-                    # print("BBB")
-                    # print(len(set(self.map)))
                     break
 
+    # normalization function using built in funnction from sklearn
     def normalize(self):
         min_max_s = MinMaxScaler()
         self.samples = min_max_s.fit_transform(self.samples)
@@ -216,6 +202,7 @@ class Som_model:
                 valid_list.append(idxes)
         return valid_list
 
+    # create one RGB color
     def create_color(self, range_num, all_max):
         range_num = int(range_num)
         if range_num == 0:
@@ -223,20 +210,23 @@ class Som_model:
             return color
         range_list = [i for i in range(1, 10)]
         tmp_divide = (range_num / all_max)
+        # separate it to 3 main colors - red, blue & green.
         if range_num in range_list[:3]:
             color = (255, ceil(20 * (tmp_divide)), ceil(120 * (tmp_divide)))
         elif range_num in range_list[3:6]:
             color = (ceil(20 * (tmp_divide)), 255, ceil(120 * (tmp_divide)))
         elif range_num in range_list[6:9]:
             color = (ceil(20 * (tmp_divide)), ceil(120 * (tmp_divide)), 255)
+        # for labels which aren't the economic labels:
         else:
             color = (ceil(250 * (tmp_divide)), ceil(100 * (tmp_divide)), ceil(250 * (tmp_divide)))
         return color
 
+    # create list of rgb colors
     def initial_colors(self):
         tmp_economic_per_cluster = []
-        counter = []
         labels = self.features[color_label].tolist()
+        # initial zero matrix
         for i in range(9):
             zero_row = []
             for i in range(len(self.clusters[i])):
@@ -251,6 +241,7 @@ class Som_model:
             tmp_economic_per_cluster[r_idx][c_idx][1] += 1
         avg_economic = []
         all_avg = []
+        # create list of average value of each cluster
         for row in tmp_economic_per_cluster:
             tmp_row = []
             for col in row:
@@ -263,6 +254,7 @@ class Som_model:
         # all_max = max(labels)
         all_max = max(all_avg)
         colors = []
+        # generate the colors list
         for row in avg_economic:
             tmp_row = []
             for col in row:
@@ -271,7 +263,7 @@ class Som_model:
         return colors
 
 
-# function to draw single hexagon
+# function to draw single hexagon with pygame
 def draw_hexagon_cell(surface, color,
                       radius, position):
     n, r = 6, radius
@@ -295,6 +287,7 @@ def draw_board(model):
 
     pygame.init()
     root = pygame.display.set_mode((w, h))
+    pygame.display.set_caption("SOM map colored by: " + color_label)
 
     while True:
         for event in pygame.event.get():
@@ -321,6 +314,7 @@ def draw_board(model):
         sleep(1)
 
 
+# calculate all topological(physical) mistakes for all tested models
 def get_topological_distance(models):
     distances = []
     for model in models:
@@ -334,6 +328,7 @@ def get_topological_distance(models):
     return distances
 
 
+# calculate all distance(math) mistakes for all tested models
 def calculate_distances(models):
     distances = []
     for model in models:
@@ -358,13 +353,15 @@ def choose_best_model(num_of_models):
     distances = calculate_distances(models)
     # for topological(physical) mistake
     topological = get_topological_distance(models)
+    # we want to weigh the tow kinds of distances by the average of each one
     avg_dist = sum(distances) / len(distances)
     avg_top = sum(topological) / len(topological)
+    # we take the fraction of each mistake(both kinds) and then sum them together
     divide_dists = [dist / avg_dist for dist in distances]
     divide_tops = [dist / avg_top for dist in topological]
     merged = [dist + top for dist, top in zip(divide_dists, divide_tops)]
+    # we take the minimum sum from above & and the index should match the index of the suit model
     best_model_idx = merged.index(min(merged))
-    # סתם לדוגמא אבל צריך להחליט איך מחשבים אחרי שיש לנו שני מערכי מרחקים לפי כל שיטה
     return models[best_model_idx]
 
 
@@ -372,16 +369,16 @@ def choose_best_model(num_of_models):
 # it fills the values by default the variables as they were defined on the top of this script.
 def getInput():
     # call all global vars to change them
-    global same_iterations_to_converge, max_iterations, num_of_trains, \
+    global same_iterations_to_converge, max_iterations, \
         alpha, num_of_rings, color_label, num_of_models
 
     window = Tk()
     window.title("Simulation Parameters")
+    window.eval('tk::PlaceWindow . center')
     main_lst = []
-    label1 = Label(window, text="Number of models: ", padx=20, pady=10)
+    label1 = Label(window, text="Number of models to train and choose the best: ", padx=20, pady=10)
     label2 = Label(window, text="Iterations for coverage: ", padx=20, pady=10)
     label3 = Label(window, text="Max iterations(if no coverage): ", padx=20, pady=10)
-    label4 = Label(window, text="Number of trains: ", padx=20, pady=10)
     label5 = Label(window, text="Alpha (learning rate): ", padx=20, pady=10)
     label6 = Label(window, text="Number of neighbors to update (0-6): ", padx=20, pady=10)
     label7 = Label(window, text="Choose label which will reflect in the hexagons color (must choose): ", padx=20,
@@ -392,8 +389,6 @@ def getInput():
     r.insert(END, str(same_iterations_to_converge))
     n = Entry(window, width=30, borderwidth=5)
     n.insert(END, str(max_iterations))
-    p1 = Entry(window, width=30, borderwidth=5)
-    p1.insert(END, str(num_of_trains))
     t = Entry(window, width=30, borderwidth=5)
     t.insert(END, str(alpha))
     p2 = Entry(window, width=30, borderwidth=5)
@@ -407,17 +402,15 @@ def getInput():
     label1.grid(row=0, column=0)
     label2.grid(row=1, column=0)
     label3.grid(row=2, column=0)
-    label4.grid(row=3, column=0)
-    label5.grid(row=4, column=0)
-    label6.grid(row=5, column=0)
-    label7.grid(row=6, column=0)
+    label5.grid(row=3, column=0)
+    label6.grid(row=4, column=0)
+    label7.grid(row=5, column=0)
     d.grid(row=0, column=1)
     r.grid(row=1, column=1)
     n.grid(row=2, column=1)
-    p1.grid(row=3, column=1)
-    t.grid(row=4, column=1)
-    p2.grid(row=5, column=1)
-    option_menu.grid(row=6, column=1)
+    t.grid(row=3, column=1)
+    p2.grid(row=4, column=1)
+    option_menu.grid(row=5, column=1)
     Exit.grid(row=10, column=0, columnspan=2)
     window.mainloop()
     try:
@@ -425,7 +418,6 @@ def getInput():
         num_of_models = int(d.get())
         same_iterations_to_converge = int(r.get())
         max_iterations = int(n.get())
-        num_of_trains = int(p1.get())
         alpha = float(t.get())
         num_of_rings = int(p2.get())
         color_label = str(variable.get())
@@ -441,6 +433,7 @@ if __name__ == '__main__':
     # inset to the function the number of models
     getInput()
     our_model = choose_best_model(num_of_models)
+    # print the cluster index of every city - index look like this "(row, column)"
     for city, cluster_idx in zip(our_model.cities_names, our_model.map):
         print("Cluster index of - " + city + " is: " + str(cluster_idx))
     draw_board(our_model)
