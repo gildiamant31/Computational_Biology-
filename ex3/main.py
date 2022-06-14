@@ -26,6 +26,8 @@ num_of_trains = 10
 alpha = 0.1
 # how many neighbors rings around the sample's cluster to update
 num_of_rings = 3
+# how much models do we want to check
+num_of_models = 1
 
 color_label = "Economic Cluster"
 
@@ -124,7 +126,7 @@ class Som_model:
     # will get 2 most close clusters and the best distance
     def get_2_closeset_clusters(self, sample):
         best_dist = np.inf
-        sec_dist = best_dist -1
+        sec_dist = best_dist - 1
         # will save the two 2d indexes
         best_idxes = [None, None]
         # calculate distance for every cluster, if its new best distance - save itand indexes
@@ -227,6 +229,8 @@ class Som_model:
             color = (ceil(20 * (tmp_divide)), 255, ceil(120 * (tmp_divide)))
         elif range_num in range_list[6:9]:
             color = (ceil(20 * (tmp_divide)), ceil(120 * (tmp_divide)), 255)
+        else:
+            color = (ceil(250 * (tmp_divide)), ceil(100 * (tmp_divide)), ceil(250 * (tmp_divide)))
         return color
 
     def initial_colors(self):
@@ -261,6 +265,7 @@ class Som_model:
         colors = []
         for row in avg_economic:
             tmp_row = []
+            print(row)
             for col in row:
                 tmp_row.append(self.create_color(col, all_max))
             colors.append(tmp_row)
@@ -281,9 +286,11 @@ def draw_hexagon_cell(surface, color,
 
 # function to draw one board of big hexagon which contain 61 hexagons
 def draw_board(model):
-    # black background
-    bg_color = (0, 0, 0)
-
+    if color_label == "Economic Cluster":
+        # black background
+        bg_color = (0, 0, 0)
+    else:
+        bg_color = (255, 255, 0)
     w, h = 600, 600
     colors = model.initial_colors()
 
@@ -355,9 +362,83 @@ def choose_best_model(num_of_models):
     return models[0]
 
 
+# this function create an input window for simulation parameters with tkinter library.
+# it fills the values by default the variables as they were defined on the top of this script.
+def getInput():
+    # call all global vars to change them
+    global same_iterations_to_converge, max_iterations, num_of_trains, \
+        alpha, num_of_rings, color_label, num_of_models
+
+    window = Tk()
+    window.title("Simulation Parameters")
+    main_lst = []
+    label1 = Label(window, text="Number of models: ", padx=20, pady=10)
+    label2 = Label(window, text="Iterations for coverage: ", padx=20, pady=10)
+    label3 = Label(window, text="Max iterations(if no coverage): ", padx=20, pady=10)
+    label4 = Label(window, text="Number of trains: ", padx=20, pady=10)
+    label5 = Label(window, text="Alpha (learning rate): ", padx=20, pady=10)
+    label6 = Label(window, text="Number of neighbors to update (0-6): ", padx=20, pady=10)
+    label7 = Label(window, text="Choose label which will reflect in the hexagons color (must choose): ", padx=20,
+                   pady=10)
+    d = Entry(window, width=30, borderwidth=5)
+    d.insert(END, str(num_of_models))
+    r = Entry(window, width=30, borderwidth=5)
+    r.insert(END, str(same_iterations_to_converge))
+    n = Entry(window, width=30, borderwidth=5)
+    n.insert(END, str(max_iterations))
+    p1 = Entry(window, width=30, borderwidth=5)
+    p1.insert(END, str(num_of_trains))
+    t = Entry(window, width=30, borderwidth=5)
+    t.insert(END, str(alpha))
+    p2 = Entry(window, width=30, borderwidth=5)
+    p2.insert(END, str(num_of_rings))
+    variable = StringVar(window)
+    variable.set(color_label)
+    option_menu = OptionMenu(window, variable, color_label, "Total Votes")
+    x = Entry(window, width=30, borderwidth=5)
+    x.insert(END, str(X))
+    Exit = Button(window, text="Start simulation", padx=20, pady=10, command=window.quit)
+    label1.grid(row=0, column=0)
+    label2.grid(row=1, column=0)
+    label3.grid(row=2, column=0)
+    label4.grid(row=3, column=0)
+    label5.grid(row=4, column=0)
+    label6.grid(row=5, column=0)
+    label7.grid(row=6, column=0)
+    d.grid(row=0, column=1)
+    r.grid(row=1, column=1)
+    n.grid(row=2, column=1)
+    p1.grid(row=3, column=1)
+    t.grid(row=4, column=1)
+    p2.grid(row=5, column=1)
+    option_menu.grid(row=6, column=1)
+    Exit.grid(row=10, column=0, columnspan=2)
+    window.mainloop()
+    try:
+        # convert the input values from string to numeric values (int or float)
+        num_of_models = int(d.get())
+        same_iterations_to_converge = int(r.get())
+        max_iterations = int(n.get())
+        num_of_trains = int(p1.get())
+        alpha = float(t.get())
+        num_of_rings = int(p2.get())
+        color_label = str(variable.get())
+        print(color_label)
+        print(type(color_label))
+    except:  # if its faild to convert that means  Input not valid - show message and exit
+        messagebox.showwarning("WRAP_AROUND Covid-19 automate", "ERRRORRRR!!!!! Input not valid")
+        sys.exit(-1)
+    # check every fraction/float input, if its unvalid - show message and exit
+    window.destroy()
+    window.quit()
+
+
 if __name__ == '__main__':
     # inset to the function the number of models
-    our_model = choose_best_model(1)
+    getInput()
+    our_model = choose_best_model(num_of_models)
+    for city, cluster_idx in zip(our_model.cities_names,our_model.map):
+        print("Cluster index of - " + city + " is: " + str(cluster_idx))
     draw_board(our_model)
 
     # TODO  add option to select color by label (color should be the avarge value of residents(why not 
