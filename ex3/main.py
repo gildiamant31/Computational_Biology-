@@ -2,7 +2,7 @@
 Gil Diamant
 Itamar Twersky
 """
-
+import os
 from time import sleep
 import pandas as pd
 import pygame
@@ -341,10 +341,10 @@ def calculate_distances(models):
     return distances
 
 
-def choose_best_model(num_of_models):
+def choose_best_model(num_of_models,file_name):
     models = []
     for i in range(num_of_models):
-        new_model = Som_model("Elec_24.csv")
+        new_model = Som_model(file_name)
         new_model.init_array_of_clusters()
         new_model.train()
         models.append(new_model)
@@ -364,6 +364,36 @@ def choose_best_model(num_of_models):
     return models[best_model_idx]
 
 
+# open window to insert the path to input file.txt with tkinter package
+def get_file_path():
+    done = False
+    while (not done):
+        # default path
+        default = "Elec_24.csv"
+        window = Tk()
+        window.title("SOM")
+        window.eval('tk::PlaceWindow . center')
+        frame = Frame(window)
+        frame.pack()
+        label1 = Label(frame, text="Please insert the path of your file: ", padx=20, pady=10)
+        d = Entry(frame, width=30, borderwidth=5)
+        d.insert(END, default)
+        exit = Button(frame, text="OK", padx=20, pady=10, command=window.quit)
+        label1.grid(row=0, column=0)
+        d.grid(row=0, column=1)
+        exit.grid(row=5, column=0, columnspan=2)
+        window.mainloop()
+        new_path = d.get()
+        window.destroy()
+        window.quit()
+        done = True
+        # if the path isn't correct
+        if not os.path.exists(new_path):
+            print("file dosent exist")
+            done = False
+    return new_path
+
+
 # this function create an input window for simulation parameters with tkinter library.
 # it fills the values by default the variables as they were defined on the top of this script.
 def getInput():
@@ -372,7 +402,7 @@ def getInput():
         alpha, num_of_rings, color_label, num_of_models
 
     window = Tk()
-    window.title("Simulation Parameters")
+    window.title("SOM Parameters")
     window.eval('tk::PlaceWindow . center')
     main_lst = []
     label1 = Label(window, text="Number of models to train and choose the best: ", padx=20, pady=10)
@@ -430,8 +460,9 @@ def getInput():
 
 if __name__ == '__main__':
     # inset to the function the number of models
+    file_path = get_file_path()
     getInput()
-    our_model = choose_best_model(num_of_models)
+    our_model = choose_best_model(num_of_models,file_path)
     # print the cluster index of every city - index look like this "(row, column)"
     for city, cluster_idx in zip(our_model.cities_names, our_model.map):
         print("Cluster index of - " + city + " is: " + str(cluster_idx))
