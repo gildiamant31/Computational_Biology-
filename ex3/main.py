@@ -265,7 +265,6 @@ class Som_model:
         colors = []
         for row in avg_economic:
             tmp_row = []
-            print(row)
             for col in row:
                 tmp_row.append(self.create_color(col, all_max))
             colors.append(tmp_row)
@@ -355,11 +354,18 @@ def choose_best_model(num_of_models):
         new_model.init_array_of_clusters()
         new_model.train()
         models.append(new_model)
+    # distance mistake
     distances = calculate_distances(models)
+    # for topological(physical) mistake
     topological = get_topological_distance(models)
-
+    avg_dist = sum(distances) / len(distances)
+    avg_top = sum(topological) / len(topological)
+    divide_dists = [dist / avg_dist for dist in distances]
+    divide_tops = [dist / avg_top for dist in topological]
+    merged = [dist + top for dist, top in zip(divide_dists, divide_tops)]
+    best_model_idx = merged.index(min(merged))
     # סתם לדוגמא אבל צריך להחליט איך מחשבים אחרי שיש לנו שני מערכי מרחקים לפי כל שיטה
-    return models[0]
+    return models[best_model_idx]
 
 
 # this function create an input window for simulation parameters with tkinter library.
@@ -423,8 +429,6 @@ def getInput():
         alpha = float(t.get())
         num_of_rings = int(p2.get())
         color_label = str(variable.get())
-        print(color_label)
-        print(type(color_label))
     except:  # if its faild to convert that means  Input not valid - show message and exit
         messagebox.showwarning("WRAP_AROUND Covid-19 automate", "ERRRORRRR!!!!! Input not valid")
         sys.exit(-1)
@@ -437,18 +441,6 @@ if __name__ == '__main__':
     # inset to the function the number of models
     getInput()
     our_model = choose_best_model(num_of_models)
-    for city, cluster_idx in zip(our_model.cities_names,our_model.map):
+    for city, cluster_idx in zip(our_model.cities_names, our_model.map):
         print("Cluster index of - " + city + " is: " + str(cluster_idx))
     draw_board(our_model)
-
-    # TODO  add option to select color by label (color should be the avarge value of residents(why not 
-    # the inner vector value))
-    # TODO add option to do multiple training and choose the best(distance and topological),
-    #  give normaliztion/wight to every method.
-    # method implentation:
-    # distance:
-    # for every sample calculate distance between it and its cluter's inner vector
-    # sum all distances
-    # topological:
-    # for every sample calculate two closest cluster, check distance between them
-    # sum distances
