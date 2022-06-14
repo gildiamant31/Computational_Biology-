@@ -20,12 +20,11 @@ dim_size = 9
 same_iterations_to_converge = 10
 # max iterations to run if there is no converge
 max_iterations = 100
-num_of_trains = 10
 alpha = 0.1
 # how many neighbors rings around the sample's cluster to update
 num_of_rings = 3
 # how much models do we want to check
-num_of_models = 1
+num_of_models = 10
 
 # default labels
 color_label = "Economic Cluster"
