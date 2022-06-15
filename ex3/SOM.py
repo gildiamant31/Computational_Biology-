@@ -341,7 +341,7 @@ def calculate_distances(models):
     return distances
 
 
-def choose_best_model(num_of_models,file_name):
+def choose_best_model(num_of_models, file_name):
     models = []
     for i in range(num_of_models):
         new_model = Som_model(file_name)
@@ -462,7 +462,7 @@ if __name__ == '__main__':
     # inset to the function the number of models
     file_path = get_file_path()
     getInput()
-    our_model = choose_best_model(num_of_models,file_path)
+    our_model = choose_best_model(num_of_models, file_path)
     # print the cluster index of every city - index look like this "(row, column)"
     for city, cluster_idx in zip(our_model.cities_names, our_model.map):
         print("Cluster index of - " + city + " is: " + str(cluster_idx))
