@@ -292,6 +292,7 @@ def draw_board(model):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
+                sleep(60)
                 exit()
 
         root.fill(bg_color)
@@ -348,6 +349,7 @@ def choose_best_model(num_of_models, file_name):
         new_model.init_array_of_clusters()
         new_model.train()
         models.append(new_model)
+        print("Model " + str(i + 1) + "/" + str(num_of_models) + " done.")
     # distance mistake
     distances = calculate_distances(models)
     # for topological(physical) mistake
@@ -424,7 +426,9 @@ def getInput():
     p2.insert(END, str(num_of_rings))
     variable = StringVar(window)
     variable.set(color_label)
-    option_menu = OptionMenu(window, variable, color_label, "Total Votes", "Labour", "Yamina", "Yahadot Hatora", "The Joint Party", "Zionut Datit", "Kachul Lavan", "Israel Betinu", "Licod", "Merez","Raam",  "Yesh Atid", "Shas", "Tikva Hadasha")
+    option_menu = OptionMenu(window, variable, color_label, "Total Votes", "Labour", "Yamina", "Yahadot Hatora",
+                             "The Joint Party", "Zionut Datit", "Kachul Lavan", "Israel Betinu", "Licod", "Merez",
+                             "Raam", "Yesh Atid", "Shas", "Tikva Hadasha")
     x = Entry(window, width=30, borderwidth=5)
     x.insert(END, str(X))
     Exit = Button(window, text="Start simulation", padx=20, pady=10, command=window.quit)
@@ -463,7 +467,10 @@ if __name__ == '__main__':
     file_path = get_file_path()
     getInput()
     our_model = choose_best_model(num_of_models, file_path)
+
+    print("\nClusters indexes per City:")
     # print the cluster index of every city - index look like this "(row, column)"
     for city, cluster_idx in zip(our_model.cities_names, our_model.map):
         print("Cluster index of - " + city + " is: " + str(cluster_idx))
     draw_board(our_model)
+
